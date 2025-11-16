@@ -1,0 +1,115 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { shoppingItems, shoppingLists, families } from '@/db/schema';
+import { auth } from '@/auth';
+import { eq, and } from 'drizzle-orm';
+import { z } from 'zod';
+import { decrypt } from '@/lib/encryption';
+import { analyzeShoppingItem } from '@/lib/gemini';
+
+const createShoppingItemSchema = z.object({
+  name: z.string().min(1).max(200),
+  qty: z.string().optional(),
+});
+
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await auth();
+    if (!session?.user?.familyId || !session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify the shopping list exists and belongs to the user's family
+    const list = await db.query.shoppingLists.findFirst({
+      where: and(eq(shoppingLists.id, params.id), eq(shoppingLists.familyId, session.user.familyId)),
+    });
+
+    if (!list) {
+      return NextResponse.json({ error: 'Shopping list not found' }, { status: 404 });
+    }
+
+    const body = await req.json();
+    const data = createShoppingItemSchema.parse(body);
+
+    // Create the item first (without AI data)
+    const [item] = await db
+      .insert(shoppingItems)
+      .values({
+        ...data,
+        listId: params.id,
+        familyId: session.user.familyId,
+        addedBy: session.user.id,
+      })
+      .returning();
+
+    // Try to analyze with AI in the background (don't block the response)
+    // This runs asynchronously after returning the item
+    analyzeItemWithAI(item.id, data.name, session.user.familyId).catch((error) => {
+      console.error('Background AI analysis failed:', error);
+      // Don't throw - we already returned the item successfully
+    });
+
+    return NextResponse.json(item, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+    console.error('Error creating shopping item:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * Analyzes an item with AI and updates it in the database
+ * This runs in the background and doesn't block the API response
+ */
+async function analyzeItemWithAI(itemId: string, itemName: string, familyId: string) {
+  try {
+    // Fetch family with AI settings
+    const family = await db.query.families.findFirst({
+      where: eq(families.id, familyId),
+    });
+
+    if (!family || !family.aiEnabled || !family.aiApiKey) {
+      // AI not enabled, skip analysis
+      return;
+    }
+
+    // Decrypt the API key
+    const apiKey = decrypt(family.aiApiKey);
+
+    // Parse preferred stores
+    const preferredStores = family.preferredStores
+      ? JSON.parse(family.preferredStores)
+      : [];
+
+    // Analyze the item
+    const analysis = await analyzeShoppingItem(
+      itemName,
+      apiKey,
+      preferredStores,
+      family.location || undefined
+    );
+
+    // Update the item with AI analysis
+    await db
+      .update(shoppingItems)
+      .set({
+        category: analysis.category,
+        estimatedPrice: analysis.estimatedPrice.toString(),
+        priceRange: analysis.priceRange,
+        bestStore: analysis.bestStore,
+        aiMetadata: JSON.stringify({
+          alternatives: analysis.alternatives,
+          tips: analysis.tips,
+        }),
+        lastAiUpdate: new Date(),
+      })
+      .where(eq(shoppingItems.id, itemId));
+
+    console.log(`Successfully analyzed item: ${itemName}`);
+  } catch (error) {
+    console.error(`Failed to analyze item ${itemName}:`, error);
+    // Don't throw - this is a background operation
+  }
+}
