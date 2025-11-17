@@ -40,3 +40,5 @@ next-env.d.ts
 drizzle/migrations
 .drizzle
 deploy-vercel.sh
+add-all-env.sh
+show-env-vars.sh
