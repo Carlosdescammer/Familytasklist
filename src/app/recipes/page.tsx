@@ -34,7 +34,6 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
-import PageAccessGuard from '@/components/PageAccessGuard';
 
 type Recipe = {
   id: string;
@@ -393,8 +392,7 @@ export default function RecipesPage() {
 
   return (
     <AppLayout>
-      <PageAccessGuard pageName="recipes">
-        <Stack gap="lg">
+      <Stack gap="lg">
           <Group justify="space-between">
             <Group gap="xs">
               <IconChefHat size={32} />
@@ -1048,7 +1046,6 @@ export default function RecipesPage() {
             </Stack>
           )}
         </Modal>
-      </PageAccessGuard>
     </AppLayout>
   );
 }

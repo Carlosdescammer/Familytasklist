@@ -480,8 +480,8 @@ export default function CalendarPage() {
         </Group>
 
         <Calendar
-          value={selectedDate}
-          onChange={(date) => date && setSelectedDate(date)}
+          date={selectedDate}
+          onDateChange={(date) => setSelectedDate(date)}
           renderDay={renderDay}
         />
 

@@ -4,8 +4,9 @@ import { Container, Paper, Title, Text, Button, Stack } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
@@ -42,5 +43,13 @@ export default function AuthErrorPage() {
         </Stack>
       </Paper>
     </Container>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={<Container size="xs" style={{ paddingTop: '5rem' }}><Text>Loading...</Text></Container>}>
+      <AuthErrorContent />
+    </Suspense>
   );
 }
