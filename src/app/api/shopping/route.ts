@@ -6,6 +6,7 @@ import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
 const createShoppingItemSchema = z.object({
+  listId: z.string().uuid(),
   name: z.string().min(1).max(200),
   qty: z.string().optional(),
 });
@@ -44,6 +45,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const familyId = session.user.familyId!;
+    const userId = session.user.id!;
+
     const body = await req.json();
     const data = createShoppingItemSchema.parse(body);
 
@@ -51,8 +55,8 @@ export async function POST(req: NextRequest) {
       .insert(shoppingItems)
       .values({
         ...data,
-        familyId: session.user.familyId,
-        addedBy: session.user.id,
+        familyId,
+        addedBy: userId,
       })
       .returning();
 
