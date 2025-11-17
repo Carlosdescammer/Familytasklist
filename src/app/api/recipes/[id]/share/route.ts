@@ -79,7 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error('Error sharing recipe:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
