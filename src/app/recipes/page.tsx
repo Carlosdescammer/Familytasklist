@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Title,
   Button,
@@ -87,11 +87,7 @@ export default function RecipesPage() {
     notes: '',
   });
 
-  useEffect(() => {
-    fetchRecipes();
-  }, [filter]);
-
-  const fetchRecipes = async () => {
+  const fetchRecipes = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -111,7 +107,11 @@ export default function RecipesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    fetchRecipes();
+  }, [fetchRecipes]);
 
   const handleCreateRecipe = async () => {
     if (!formData.title.trim() || formData.ingredients.filter(i => i.trim()).length === 0) {

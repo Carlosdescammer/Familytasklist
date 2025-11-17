@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useCallback } from 'react';
 import {
   AppShell,
   Burger,
@@ -76,16 +76,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchNotifications();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [session?.user?.id]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!session?.user?.id) return;
 
     try {
@@ -97,7 +88,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchNotifications();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [session?.user?.id, fetchNotifications]);
 
   const markAllAsRead = async () => {
     try {

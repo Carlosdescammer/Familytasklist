@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Title,
   Stack,
@@ -40,13 +40,7 @@ export default function UserProfilePage() {
     relationship: '',
   });
 
-  useEffect(() => {
-    if (params.id) {
-      fetchUser();
-    }
-  }, [params.id]);
-
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const res = await fetch(`/api/users/${params.id}`);
       if (res.ok) {
@@ -65,7 +59,13 @@ export default function UserProfilePage() {
     } catch (error) {
       console.error('Error fetching user:', error);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchUser();
+    }
+  }, [params.id, fetchUser]);
 
   const handleSave = async () => {
     setLoading(true);

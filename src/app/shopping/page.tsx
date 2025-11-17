@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Title,
   Button,
@@ -133,13 +133,7 @@ export default function ShoppingPage() {
     isFamilyList: false,
   });
 
-  useEffect(() => {
-    fetchLists();
-    fetchEvents();
-    fetchFamilyMembers();
-  }, []);
-
-  const fetchLists = async () => {
+  const fetchLists = useCallback(async () => {
     try {
       const res = await fetch('/api/shopping-lists');
       const data = await res.json();
@@ -153,9 +147,9 @@ export default function ShoppingPage() {
     } catch (error) {
       console.error('Error fetching lists:', error);
     }
-  };
+  }, [selectedListId]);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const res = await fetch('/api/events');
       const data = await res.json();
@@ -163,9 +157,9 @@ export default function ShoppingPage() {
     } catch (error) {
       console.error('Error fetching events:', error);
     }
-  };
+  }, []);
 
-  const fetchFamilyMembers = async () => {
+  const fetchFamilyMembers = useCallback(async () => {
     try {
       const res = await fetch('/api/families');
       if (res.ok) {
@@ -177,7 +171,13 @@ export default function ShoppingPage() {
     } catch (error) {
       console.error('Error fetching family members:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchLists();
+    fetchEvents();
+    fetchFamilyMembers();
+  }, [fetchLists, fetchEvents, fetchFamilyMembers]);
 
   const handleCreateList = async () => {
     if (!shoppingListFormData.name.trim()) {
