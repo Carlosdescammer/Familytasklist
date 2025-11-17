@@ -3,12 +3,12 @@
 import { Title, Grid, Card, Text, Group, Stack, Badge, Progress, Button, RingProgress, Center } from '@mantine/core';
 import { IconCalendar, IconShoppingCart, IconCheckbox, IconTrophy, IconStar, IconCoins, IconCheck } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import AppLayout from '@/components/AppLayout';
 import { notifications } from '@mantine/notifications';
 
 export default function Dashboard() {
-  const { data: session } = useSession();
+  const { user, loading } = useCurrentUser();
   const [stats, setStats] = useState({
     events: 0,
     shopping: 0,
@@ -40,8 +40,8 @@ export default function Dashboard() {
         });
 
         // Filter tasks assigned to current user
-        if (session?.user?.id && Array.isArray(tasks)) {
-          const userTasks = tasks.filter((task: any) => task.assignedTo === session.user.id);
+        if (user?.id && Array.isArray(tasks)) {
+          const userTasks = tasks.filter((task: any) => task.assignedTo === user.id);
           setMyTasks(userTasks);
         }
       } catch (error) {
@@ -50,15 +50,15 @@ export default function Dashboard() {
     };
 
     fetchStats();
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     // Fetch user profile for gamification data
     const fetchProfile = async () => {
-      if (!session?.user?.id) return;
+      if (!user?.id) return;
 
       try {
-        const res = await fetch(`/api/users/${session.user.id}/child-settings`);
+        const res = await fetch(`/api/users/${user.id}/child-settings`);
         if (res.ok) {
           const data = await res.json();
           setUserProfile(data);
@@ -69,7 +69,7 @@ export default function Dashboard() {
     };
 
     fetchProfile();
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   const handleCompleteTask = async (taskId: string, pointsToAward: number) => {
     try {
@@ -90,12 +90,12 @@ export default function Dashboard() {
         // Refresh tasks and profile
         const tasksRes = await fetch('/api/tasks');
         const tasks = await tasksRes.json();
-        if (session?.user?.id && Array.isArray(tasks)) {
-          const userTasks = tasks.filter((task: any) => task.assignedTo === session.user.id);
+        if (user?.id && Array.isArray(tasks)) {
+          const userTasks = tasks.filter((task: any) => task.assignedTo === user.id);
           setMyTasks(userTasks);
         }
 
-        const profileRes = await fetch(`/api/users/${session?.user?.id}/child-settings`);
+        const profileRes = await fetch(`/api/users/${user?.id}/child-settings`);
         if (profileRes.ok) {
           const data = await profileRes.json();
           setUserProfile(data);
@@ -110,7 +110,7 @@ export default function Dashboard() {
     }
   };
 
-  const isChildWithGamification = session?.user?.role === 'child' && userProfile?.gamificationEnabled;
+  const isChildWithGamification = user?.role === 'child' && userProfile?.gamificationEnabled;
 
   // Calculate level based on total points earned
   const calculateLevel = (points: number) => {
@@ -138,7 +138,7 @@ export default function Dashboard() {
           <Group justify="space-between" align="center">
             <div>
               <Title order={1} style={{ fontSize: '2rem' }}>
-                Hey {userProfile?.name || session?.user?.name || 'Champion'}! 👋
+                Hey {userProfile?.name || user?.name || 'Champion'}! 👋
               </Title>
               <Text size="lg" c="dimmed">
                 Ready to earn some Family Bucks?

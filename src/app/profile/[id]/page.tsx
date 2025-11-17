@@ -18,14 +18,14 @@ import {
 import { DateInput } from '@mantine/dates';
 import { IconEdit, IconArrowLeft } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useSession } from 'next-auth/react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import AppLayout from '@/components/AppLayout';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 export default function UserProfilePage() {
   const params = useParams();
-  const { data: session } = useSession();
+  const { user: currentUser } = useCurrentUser();
   const [user, setUser] = useState<any>(null);
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -111,8 +111,8 @@ export default function UserProfilePage() {
       .slice(0, 2);
   };
 
-  const isOwnProfile = session?.user?.id === params.id;
-  const canEdit = session?.user?.role === 'parent' || isOwnProfile;
+  const isOwnProfile = currentUser?.id === params.id;
+  const canEdit = currentUser?.role === 'parent' || isOwnProfile;
 
   if (!user) {
     return (

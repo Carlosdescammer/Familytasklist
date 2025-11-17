@@ -26,7 +26,7 @@ import {
   Divider,
 } from '@mantine/core';
 import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy } from '@tabler/icons-react';
-import { useSession } from 'next-auth/react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
@@ -49,7 +49,7 @@ const COMMON_STORES = [
 ];
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { user } = useCurrentUser();
   const [family, setFamily] = useState<any>(null);
 
   // AI Settings state
@@ -314,11 +314,11 @@ export default function SettingsPage() {
             <Title order={3}>Account Information</Title>
             <Group>
               <Text fw={500}>Email:</Text>
-              <Text>{session?.user?.email}</Text>
+              <Text>{user?.email}</Text>
             </Group>
             <Group>
               <Text fw={500}>Role:</Text>
-              <Text style={{ textTransform: 'capitalize' }}>{session?.user?.role || 'Parent'}</Text>
+              <Text style={{ textTransform: 'capitalize' }}>{user?.role || 'Parent'}</Text>
             </Group>
           </Stack>
         </Card>
@@ -365,31 +365,31 @@ export default function SettingsPage() {
 
                 <div>
                   <Text fw={500} mb="xs">
-                    Family Members ({family.users?.filter((u: any) => u.email !== session?.user?.email).length || 0})
+                    Family Members ({family.users?.filter((u: any) => u.email !== user?.email).length || 0})
                   </Text>
                   <Stack gap="xs">
                     {family.users
-                      ?.filter((user: any) => user.email !== session?.user?.email)
-                      .map((user: any) => {
-                        let displayName = user.name || user.email.split('@')[0];
-                        if (user.relationship) {
-                          displayName = `${displayName} (${user.relationship})`;
+                      ?.filter((familyUser: any) => familyUser.email !== user?.email)
+                      .map((familyUser: any) => {
+                        let displayName = familyUser.name || familyUser.email.split('@')[0];
+                        if (familyUser.relationship) {
+                          displayName = `${displayName} (${familyUser.relationship})`;
                         }
                         return (
-                          <Card key={user.id} padding="sm" withBorder>
+                          <Card key={familyUser.id} padding="sm" withBorder>
                             <Group justify="space-between">
                               <div>
                                 <Text>{displayName}</Text>
                                 <Text size="xs" c="dimmed">
-                                  {user.email}
+                                  {familyUser.email}
                                 </Text>
                               </div>
                               <Group gap="xs">
-                                {session?.user?.role === 'parent' ? (
+                                {user?.role === 'parent' ? (
                                   <>
                                     <Select
-                                      value={user.role}
-                                      onChange={(value) => handleRoleChange(user.id, value!)}
+                                      value={familyUser.role}
+                                      onChange={(value) => handleRoleChange(familyUser.id, value!)}
                                       data={[
                                         { value: 'parent', label: 'Parent' },
                                         { value: 'child', label: 'Child' },
@@ -397,20 +397,20 @@ export default function SettingsPage() {
                                       style={{ width: 120 }}
                                       size="sm"
                                     />
-                                    {user.role === 'child' && (
+                                    {familyUser.role === 'child' && (
                                       <Button
                                         size="xs"
                                         variant="light"
                                         leftSection={<IconSettings size={14} />}
-                                        onClick={() => handleOpenChildSettings(user)}
+                                        onClick={() => handleOpenChildSettings(familyUser)}
                                       >
                                         Configure
                                       </Button>
                                     )}
                                   </>
                                 ) : (
-                                  <Badge color={user.role === 'parent' ? 'blue' : 'gray'}>
-                                    {user.role}
+                                  <Badge color={familyUser.role === 'parent' ? 'blue' : 'gray'}>
+                                    {familyUser.role}
                                   </Badge>
                                 )}
                               </Group>
@@ -440,7 +440,7 @@ export default function SettingsPage() {
           </Stack>
         </Card>
 
-        {session?.user?.role === 'parent' && (
+        {user?.role === 'parent' && (
           <Card shadow="sm" padding="lg" radius="md" withBorder>
             <Stack gap="md">
               <Group>
@@ -569,7 +569,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handleSaveAiSettings}
                   loading={isSavingAi}
-                  disabled={!session || session.user.role !== 'parent'}
+                  disabled={!user || user.role !== 'parent'}
                   leftSection={<IconSparkles size={16} />}
                 >
                   Save AI Settings

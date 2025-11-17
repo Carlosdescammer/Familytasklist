@@ -35,7 +35,8 @@ import {
   IconBell,
   IconChefHat,
 } from '@tabler/icons-react';
-import { useSession, signOut } from 'next-auth/react';
+import { useClerk } from '@clerk/nextjs';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { canAccessPage, type PageName } from '@/lib/page-access';
@@ -66,7 +67,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const [notifOpened, { toggle: toggleNotif, close: closeNotif }] = useDisclosure();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const { data: session } = useSession();
+  const { user, loading } = useCurrentUser();
+  const { signOut } = useClerk();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -77,7 +79,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const res = await fetch('/api/notifications');
@@ -88,16 +90,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  }, [session?.user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (session?.user?.id) {
+    if (user?.id) {
       fetchNotifications();
       // Poll for new notifications every 30 seconds
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     }
-  }, [session?.user?.id, fetchNotifications]);
+  }, [user?.id, fetchNotifications]);
 
   const markAllAsRead = async () => {
     try {
@@ -251,7 +253,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <UnstyledButton>
                   <Group gap="xs">
                     <IconUser size={24} />
-                    <Text size="sm">{session?.user?.email?.split('@')[0]}</Text>
+                    <Text size="sm">{user?.name || user?.email?.split('@')[0] || 'User'}</Text>
                   </Group>
                 </UnstyledButton>
               </Menu.Target>
@@ -265,7 +267,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <Menu.Item
                   color="red"
                   leftSection={<IconLogout size={16} />}
-                  onClick={() => signOut()}
+                  onClick={() => signOut({ redirectUrl: '/landing' })}
                 >
                   Logout
                 </Menu.Item>
@@ -283,8 +285,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
             // Check if user has access to this page
             return canAccessPage(
-              session?.user?.role,
-              session?.user?.allowedPages,
+              user?.role,
+              user?.allowedPages,
               item.pageName
             );
           })

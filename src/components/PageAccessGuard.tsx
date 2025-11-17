@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
 import { canAccessPage, type PageName } from '@/lib/page-access';
@@ -16,21 +16,21 @@ export default function PageAccessGuard({
   children,
   pageName,
 }: PageAccessGuardProps) {
-  const { data: session, status } = useSession();
+  const { user, loading, isSignedIn } = useCurrentUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (loading) return;
 
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+    if (!isSignedIn) {
+      router.push('/sign-in');
       return;
     }
 
-    if (session?.user) {
+    if (user) {
       const hasAccess = canAccessPage(
-        session.user.role,
-        session.user.allowedPages,
+        user.role,
+        user.allowedPages,
         pageName
       );
 
@@ -39,10 +39,10 @@ export default function PageAccessGuard({
         router.push('/');
       }
     }
-  }, [session, status, router, pageName]);
+  }, [user, loading, isSignedIn, router, pageName]);
 
   // Show loading state
-  if (status === 'loading') {
+  if (loading) {
     return (
       <Container>
         <Center style={{ minHeight: '50vh' }}>
@@ -53,10 +53,10 @@ export default function PageAccessGuard({
   }
 
   // Check access
-  if (session?.user) {
+  if (user) {
     const hasAccess = canAccessPage(
-      session.user.role,
-      session.user.allowedPages,
+      user.role,
+      user.allowedPages,
       pageName
     );
 
