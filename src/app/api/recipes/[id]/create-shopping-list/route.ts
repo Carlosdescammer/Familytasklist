@@ -18,6 +18,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Store familyId and userId for type safety
+    const familyId = session.user.familyId;
+    const userId = session.user.id;
+
     const body = await req.json();
     const data = createShoppingListSchema.parse(body);
 
@@ -31,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     // Check if user has access to this recipe
-    if (recipe.familyId !== session.user.familyId && !recipe.isPublic) {
+    if (recipe.familyId !== familyId && !recipe.isPublic) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -49,21 +53,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const [shoppingList] = await db
       .insert(shoppingLists)
       .values({
-        familyId: session.user.familyId,
+        familyId,
         name: listName,
         description: `Ingredients for ${recipe.title}`,
         eventId: data.eventId || null,
         isFamilyList: true,
-        createdBy: session.user.id,
+        createdBy: userId,
       })
       .returning();
 
     // Add each ingredient as a shopping item
     const itemsToInsert = ingredients.map((ingredient) => ({
       listId: shoppingList.id,
-      familyId: session.user.familyId,
+      familyId,
       name: ingredient,
-      addedBy: session.user.id,
+      addedBy: userId,
       completed: false,
     }));
 
