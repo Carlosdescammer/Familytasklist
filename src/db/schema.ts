@@ -9,7 +9,8 @@ export const families = pgTable('families', {
   description: text('description'),
   funFacts: text('fun_facts'), // JSON string of fun facts
   // AI Shopping Assistant fields
-  aiApiKey: text('ai_api_key'), // Encrypted Google Gemini API key
+  aiProvider: text('ai_provider').default('gemini').notNull(), // 'gemini' or 'openai'
+  aiApiKey: text('ai_api_key'), // Encrypted API key (Gemini or OpenAI)
   aiEnabled: boolean('ai_enabled').default(false).notNull(),
   preferredStores: text('preferred_stores'), // JSON array of store names
   location: text('location'), // City/region for price estimates
@@ -20,7 +21,8 @@ export const families = pgTable('families', {
 // Users table
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }), // Primary family (for backward compatibility)
+  activeFamilyId: uuid('active_family_id').references(() => families.id, { onDelete: 'set null' }), // Currently active family context
   email: text('email').unique().notNull(),
   passwordHash: text('password_hash'),
   role: text('role').default('parent').notNull(),
@@ -41,6 +43,21 @@ export const users = pgTable('users', {
   familyBucks: numeric('family_bucks', { precision: 10, scale: 2 }).default('0').notNull(), // Current balance
   totalPointsEarned: numeric('total_points_earned', { precision: 10, scale: 2 }).default('0').notNull(), // Lifetime points
   pointsPerTask: numeric('points_per_task', { precision: 10, scale: 2 }).default('10').notNull(), // Points awarded per task completion
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Family Members junction table - supports multi-family membership
+export const familyMembers = pgTable('family_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  roleInFamily: text('role_in_family').notNull(), // e.g., "Dad", "Mom", "Uncle", "Aunt", "Son", "Daughter", "Grandparent"
+  isAdmin: boolean('is_admin').default(false).notNull(), // Can manage family settings
+  joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -95,13 +112,20 @@ export const shoppingItems = pgTable('shopping_items', {
   qty: text('qty'),
   addedBy: uuid('added_by').references(() => users.id, { onDelete: 'set null' }),
   completed: boolean('completed').default(false).notNull(),
+  // Brand selection
+  brand: text('brand'), // User-selected brand (e.g., "Great Value", "Kraft", "Organic Valley")
   // AI-generated fields
   category: text('category'), // e.g., "Produce", "Dairy", "Meat"
   estimatedPrice: numeric('estimated_price', { precision: 10, scale: 2 }), // AI-suggested price
+  currentPrice: numeric('current_price', { precision: 10, scale: 2 }), // Current online price from stores
   priceRange: text('price_range'), // e.g., "$2-$4"
   bestStore: text('best_store'), // AI recommendation based on family preferences
+  deals: text('deals'), // JSON array of active deals/coupons
+  brandOptions: text('brand_options'), // JSON array of AI-suggested brands with pricing
   aiMetadata: text('ai_metadata'), // JSON for additional AI data (alternatives, tips, etc.)
   lastAiUpdate: timestamp('last_ai_update', { withTimezone: true }), // When AI last analyzed this item
+  // User-entered actual price
+  actualPrice: numeric('actual_price', { precision: 10, scale: 2 }), // Real price paid by user
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -143,13 +167,45 @@ export const notifications = pgTable('notifications', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Recipes table
+export const recipes = pgTable('recipes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  ingredients: text('ingredients').notNull(), // JSON array of ingredients with measurements
+  instructions: text('instructions').notNull(), // JSON array of step-by-step instructions
+  cookingTime: text('cooking_time'), // e.g., "30 minutes"
+  prepTime: text('prep_time'), // e.g., "15 minutes"
+  servings: text('servings'), // e.g., "4 servings"
+  difficulty: text('difficulty'), // "easy", "medium", "hard"
+  category: text('category'), // e.g., "Breakfast", "Dinner", "Dessert"
+  cuisine: text('cuisine'), // e.g., "Italian", "Mexican", "Asian"
+  imageUrl: text('image_url'), // URL to recipe image
+  source: text('source').default('user').notNull(), // "user" or "ai"
+  isPublic: boolean('is_public').default(false).notNull(), // Share with platform
+  isFavorite: boolean('is_favorite').default(false).notNull(), // Marked as favorite by creator
+  tags: text('tags'), // JSON array of tags
+  favoriteByUsers: text('favorite_by_users'), // JSON array of user IDs who favorited this
+  sharedWithFamilies: text('shared_with_families'), // JSON array of family IDs
+  notes: text('notes'), // Additional notes or tips
+  nutritionInfo: text('nutrition_info'), // JSON object with nutrition data (optional)
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
   users: many(users),
+  familyMembers: many(familyMembers),
   events: many(events),
   shoppingLists: many(shoppingLists),
   shoppingItems: many(shoppingItems),
   tasks: many(tasks),
+  recipes: many(recipes),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -157,10 +213,27 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.familyId],
     references: [families.id],
   }),
+  activeFamily: one(families, {
+    fields: [users.activeFamilyId],
+    references: [families.id],
+  }),
+  familyMemberships: many(familyMembers),
   createdEvents: many(events),
   createdShoppingLists: many(shoppingLists),
   addedShoppingItems: many(shoppingItems),
   assignedTasks: many(tasks),
+  createdRecipes: many(recipes),
+}));
+
+export const familyMembersRelations = relations(familyMembers, ({ one }) => ({
+  user: one(users, {
+    fields: [familyMembers.userId],
+    references: [users.id],
+  }),
+  family: one(families, {
+    fields: [familyMembers.familyId],
+    references: [families.id],
+  }),
 }));
 
 export const eventsRelations = relations(events, ({ one, many }) => ({
@@ -213,6 +286,17 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   }),
   assignedUser: one(users, {
     fields: [tasks.assignedTo],
+    references: [users.id],
+  }),
+}));
+
+export const recipesRelations = relations(recipes, ({ one }) => ({
+  family: one(families, {
+    fields: [recipes.familyId],
+    references: [families.id],
+  }),
+  creator: one(users, {
+    fields: [recipes.createdBy],
     references: [users.id],
   }),
 }));
@@ -275,6 +359,8 @@ export type Family = typeof families.$inferSelect;
 export type NewFamily = typeof families.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type FamilyMember = typeof familyMembers.$inferSelect;
+export type NewFamilyMember = typeof familyMembers.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type ShoppingList = typeof shoppingLists.$inferSelect;
@@ -283,3 +369,5 @@ export type ShoppingItem = typeof shoppingItems.$inferSelect;
 export type NewShoppingItem = typeof shoppingItems.$inferInsert;
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+export type Recipe = typeof recipes.$inferSelect;
+export type NewRecipe = typeof recipes.$inferInsert;

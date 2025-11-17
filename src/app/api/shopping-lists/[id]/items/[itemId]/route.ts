@@ -9,6 +9,8 @@ const updateShoppingItemSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   qty: z.string().optional(),
   completed: z.boolean().optional(),
+  actualPrice: z.string().nullable().optional(),
+  brand: z.string().nullable().optional(),
 });
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string; itemId: string } }) {

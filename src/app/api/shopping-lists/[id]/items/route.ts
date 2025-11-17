@@ -88,7 +88,8 @@ async function analyzeItemWithAI(itemId: string, itemName: string, familyId: str
       itemName,
       apiKey,
       preferredStores,
-      family.location || undefined
+      family.location || undefined,
+      family.aiProvider as 'gemini' | 'openai'
     );
 
     // Update the item with AI analysis
@@ -97,8 +98,11 @@ async function analyzeItemWithAI(itemId: string, itemName: string, familyId: str
       .set({
         category: analysis.category,
         estimatedPrice: analysis.estimatedPrice.toString(),
+        currentPrice: analysis.currentPrice ? analysis.currentPrice.toString() : null,
         priceRange: analysis.priceRange,
         bestStore: analysis.bestStore,
+        deals: analysis.deals ? JSON.stringify(analysis.deals) : null,
+        brandOptions: analysis.brandOptions ? JSON.stringify(analysis.brandOptions) : null,
         aiMetadata: JSON.stringify({
           alternatives: analysis.alternatives,
           tips: analysis.tips,

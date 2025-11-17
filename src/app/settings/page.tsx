@@ -53,6 +53,7 @@ export default function SettingsPage() {
   const [family, setFamily] = useState<any>(null);
 
   // AI Settings state
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'openai'>('gemini');
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiApiKey, setAiApiKey] = useState('');
   const [preferredStores, setPreferredStores] = useState<string[]>([]);
@@ -84,6 +85,7 @@ export default function SettingsPage() {
         const data = await res.json();
         setFamily(data);
         // Populate AI settings
+        setAiProvider(data.aiProvider || 'gemini');
         setAiEnabled(data.aiEnabled || false);
         setPreferredStores(data.preferredStores || []);
         setLocation(data.location || '');
@@ -124,9 +126,10 @@ export default function SettingsPage() {
 
   const handleSaveAiSettings = async () => {
     if (aiEnabled && !aiApiKey && !family?.hasApiKey) {
+      const providerName = aiProvider === 'openai' ? 'OpenAI' : 'Google Gemini';
       notifications.show({
         title: 'Error',
-        message: 'Please enter your Google Gemini API key to enable AI features',
+        message: `Please enter your ${providerName} API key to enable AI features`,
         color: 'red',
       });
       return;
@@ -135,6 +138,7 @@ export default function SettingsPage() {
     setIsSavingAi(true);
     try {
       const updateData: any = {
+        aiProvider,
         aiEnabled,
         preferredStores,
         location,
@@ -461,17 +465,38 @@ export default function SettingsPage() {
 
               {aiEnabled && (
                 <>
+                  <Select
+                    label="AI Provider"
+                    description="Choose which AI service to use for shopping analysis"
+                    value={aiProvider}
+                    onChange={(value) => setAiProvider(value as 'gemini' | 'openai')}
+                    data={[
+                      { value: 'gemini', label: 'Google Gemini (Free - 1,500 requests/day)' },
+                      { value: 'openai', label: 'OpenAI (ChatGPT) (Paid - Pay per use)' },
+                    ]}
+                  />
+
                   <div>
                     <PasswordInput
-                      label="Google Gemini API Key"
-                      placeholder={family?.hasApiKey ? 'API key is set (enter new key to update)' : 'Enter your Google Gemini API key'}
+                      label={aiProvider === 'openai' ? 'OpenAI API Key' : 'Google Gemini API Key'}
+                      placeholder={family?.hasApiKey ? 'API key is set (enter new key to update)' : `Enter your ${aiProvider === 'openai' ? 'OpenAI' : 'Google Gemini'} API key`}
                       description={
-                        <>
-                          Get your free API key at{' '}
-                          <Anchor href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" size="xs">
-                            Google AI Studio
-                          </Anchor>
-                        </>
+                        aiProvider === 'openai' ? (
+                          <>
+                            Get your API key at{' '}
+                            <Anchor href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" size="xs">
+                              OpenAI Platform
+                            </Anchor>
+                            {' '}(requires paid account)
+                          </>
+                        ) : (
+                          <>
+                            Get your free API key at{' '}
+                            <Anchor href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" size="xs">
+                              Google AI Studio
+                            </Anchor>
+                          </>
+                        )
                       }
                       value={aiApiKey}
                       onChange={(e) => setAiApiKey(e.target.value)}
@@ -530,7 +555,10 @@ export default function SettingsPage() {
                         <strong>Privacy:</strong> Your API key is encrypted and only used for your family's AI features.
                       </Text>
                       <Text size="xs">
-                        <strong>Cost:</strong> Google Gemini offers a generous free tier (60 requests/minute).
+                        <strong>Cost:</strong> {aiProvider === 'openai'
+                          ? 'OpenAI charges per request (typically $0.001-$0.002 per analysis using gpt-4o-mini).'
+                          : 'Google Gemini offers a generous free tier (1,500 requests/day).'
+                        }
                       </Text>
                     </Stack>
                   </Alert>

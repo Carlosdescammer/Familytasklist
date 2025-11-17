@@ -28,6 +28,7 @@
     "googleapis": "^166.0.0",
     "next": "^14.2.0",
     "next-auth": "^5.0.0-beta.30",
+    "openai": "^6.9.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "uuid": "^13.0.0",
@@ -48,6 +49,7 @@
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "prettier": "^3.6.2",
+    "sharp": "^0.34.5",
     "tsx": "^4.20.6",
     "typescript": "^5"
   }

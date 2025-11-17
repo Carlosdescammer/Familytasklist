@@ -33,16 +33,19 @@ import {
   IconUser,
   IconUsers,
   IconBell,
+  IconChefHat,
 } from '@tabler/icons-react';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { canAccessPage, type PageName } from '@/lib/page-access';
+import { FamilySwitcher } from '@/components/FamilySwitcher';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: IconHome, pageName: null }, // Dashboard has no restrictions
   { href: '/calendar', label: 'Calendar', icon: IconCalendar, pageName: 'calendar' as PageName },
   { href: '/shopping', label: 'Shopping', icon: IconShoppingCart, pageName: 'shopping' as PageName },
+  { href: '/recipes', label: 'Recipes', icon: IconChefHat, pageName: null }, // Recipes has no restrictions
   { href: '/tasks', label: 'Tasks', icon: IconCheckbox, pageName: 'tasks' as PageName },
   { href: '/family', label: 'Family', icon: IconUsers, pageName: 'family' as PageName },
   { href: '/settings', label: 'Settings', icon: IconSettings, pageName: 'settings' as PageName },
@@ -137,6 +140,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </Group>
 
           <Group>
+            {/* Family Switcher */}
+            <FamilySwitcher />
+
             {mounted && (
               <ActionIcon
                 onClick={() => toggleColorScheme()}

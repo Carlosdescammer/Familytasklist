@@ -83,6 +83,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             columns: {
               id: true,
               familyId: true,
+              activeFamilyId: true,
               role: true,
               allowedPages: true,
             },
@@ -90,7 +91,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (user) {
             session.user.id = user.id;
-            session.user.familyId = user.familyId;
+            // Use activeFamilyId if set, otherwise fallback to familyId
+            session.user.familyId = user.activeFamilyId || user.familyId;
             session.user.role = user.role;
             session.user.allowedPages = user.allowedPages
               ? JSON.parse(user.allowedPages)

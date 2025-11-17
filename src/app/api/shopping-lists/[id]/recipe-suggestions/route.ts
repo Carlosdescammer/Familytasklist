@@ -67,9 +67,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     // Extract item names
     const itemNames = list.items.map(item => item.name);
 
-    // Generate recipe suggestions using Gemini AI
+    // Generate recipe suggestions using AI
     try {
-      const recipes = await generateRecipeSuggestions(itemNames, apiKey);
+      const recipes = await generateRecipeSuggestions(
+        itemNames,
+        apiKey,
+        family.aiProvider as 'gemini' | 'openai'
+      );
 
       return NextResponse.json({
         success: true,

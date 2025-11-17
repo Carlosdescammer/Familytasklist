@@ -97,6 +97,7 @@ const updateFamilySchema = z.object({
   description: z.string().optional(),
   funFacts: z.string().optional(),
   // AI Shopping Assistant fields
+  aiProvider: z.enum(['gemini', 'openai']).optional(),
   aiApiKey: z.string().optional(),
   aiEnabled: z.boolean().optional(),
   preferredStores: z.array(z.string()).optional(),
@@ -124,6 +125,7 @@ export async function PATCH(req: NextRequest) {
       funFacts: data.funFacts,
       location: data.location,
       aiEnabled: data.aiEnabled,
+      aiProvider: data.aiProvider,
     };
 
     // Handle preferred stores - convert array to JSON string
@@ -134,15 +136,16 @@ export async function PATCH(req: NextRequest) {
     // Handle AI API key - encrypt if provided
     if (data.aiApiKey !== undefined) {
       if (data.aiApiKey && data.aiApiKey.trim().length > 0) {
-        // Note: API key validation temporarily disabled due to Google AI API version compatibility
-        // The key will be validated when actually used for AI features
-        // const isValid = await testApiKey(data.aiApiKey);
-        // if (!isValid) {
-        //   return NextResponse.json(
-        //     { error: 'Invalid API key. Please check your Google Gemini API key and try again.' },
-        //     { status: 400 }
-        //   );
-        // }
+        // Validate API key with the selected provider (or default to gemini)
+        const provider = data.aiProvider || 'gemini';
+        const isValid = await testApiKey(data.aiApiKey, provider);
+        if (!isValid) {
+          const providerName = provider === 'openai' ? 'OpenAI' : 'Google Gemini';
+          return NextResponse.json(
+            { error: `Invalid API key. Please check your ${providerName} API key and try again.` },
+            { status: 400 }
+          );
+        }
         // Encrypt the API key before storing
         updateData.aiApiKey = encrypt(data.aiApiKey);
       } else {

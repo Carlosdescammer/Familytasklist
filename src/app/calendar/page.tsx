@@ -399,6 +399,19 @@ export default function CalendarPage() {
     list.event && dayjs(list.event.startTime).isSame(selectedDate, 'day')
   );
 
+  // Get all upcoming events, tasks, and shopping lists (future items)
+  const upcomingEvents = events.filter((event) =>
+    dayjs(event.startTime).isAfter(dayjs(), 'day')
+  ).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  const upcomingTasks = tasks.filter((task) =>
+    task.dueDate && dayjs(task.dueDate).isAfter(dayjs(), 'day') && !task.completed
+  ).sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime());
+
+  const upcomingShoppingLists = shoppingLists.filter((list) =>
+    list.event && dayjs(list.event.startTime).isAfter(dayjs(), 'day')
+  ).sort((a, b) => new Date(a.event!.startTime).getTime() - new Date(b.event!.startTime).getTime());
+
   const renderDay = (date: Date) => {
     const hasEvent = events.some((event) =>
       dayjs(event.startTime).isSame(date, 'day')
@@ -629,6 +642,173 @@ export default function CalendarPage() {
                       {list.event && (
                         <Text size="sm" c="dimmed" mt="xs">
                           📅 {list.event.title} - {dayjs(list.event.startTime).format('h:mm A')}
+                        </Text>
+                      )}
+                      {list.items && list.items.length > 0 && (
+                        <Text size="xs" c="dimmed" mt="xs">
+                          {list.items.filter(i => i.completed).length} of {list.items.length} items completed
+                        </Text>
+                      )}
+                    </div>
+                  </Group>
+                </Card>
+              ))}
+            </>
+          )}
+        </Stack>
+
+        {/* Upcoming Items Section */}
+        <Stack gap="md" mt="xl">
+          <Group justify="space-between" align="center">
+            <Title order={3}>Upcoming</Title>
+            <Group gap="xs">
+              <Badge color="blue" variant="dot">Events</Badge>
+              <Badge color="grape" variant="dot">Tasks</Badge>
+              <Badge color="green" variant="dot">Shopping Lists</Badge>
+            </Group>
+          </Group>
+
+          {upcomingEvents.length === 0 && upcomingTasks.length === 0 && upcomingShoppingLists.length === 0 ? (
+            <Text c="dimmed">No upcoming events, tasks, or shopping lists</Text>
+          ) : (
+            <>
+              {upcomingEvents.map((event) => (
+                <Card
+                  key={`upcoming-event-${event.id}`}
+                  shadow="sm"
+                  padding="md"
+                  radius="md"
+                  withBorder
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  onClick={() => {
+                    setSelectedEvent(event);
+                    setEventDetailModalOpened(true);
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <Group justify="space-between">
+                    <div style={{ flex: 1 }}>
+                      <Group gap="xs">
+                        <Badge color={event.color || 'blue'} size="sm">Event</Badge>
+                        {event.eventType && <Badge color="gray" size="xs" variant="light">{event.eventType}</Badge>}
+                        <Text fw={500}>{event.title}</Text>
+                      </Group>
+                      <Text size="sm" c="dimmed" mt="xs">
+                        📅 {dayjs(event.startTime).format('MMMM D, YYYY')} at {dayjs(event.startTime).format('h:mm A')} - {dayjs(event.endTime).format('h:mm A')}
+                      </Text>
+                      {event.location && (
+                        <Text size="sm" c="dimmed" mt="xs">
+                          📍 {event.location}
+                        </Text>
+                      )}
+                      {event.description && (
+                        <Text size="sm" mt="xs" lineClamp={1}>
+                          {event.description}
+                        </Text>
+                      )}
+                    </div>
+                    <Group gap="xs">
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(event);
+                        }}
+                        leftSection={<IconEdit size={14} />}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        color="red"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(event.id);
+                        }}
+                        leftSection={<IconTrash size={14} />}
+                      >
+                        Delete
+                      </Button>
+                    </Group>
+                  </Group>
+                </Card>
+              ))}
+
+              {upcomingTasks.map((task) => (
+                <Card
+                  key={`upcoming-task-${task.id}`}
+                  shadow="sm"
+                  padding="md"
+                  radius="md"
+                  withBorder
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  onClick={() => {
+                    setSelectedTask(task);
+                    setTaskDetailModalOpened(true);
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <Group justify="space-between">
+                    <div style={{ flex: 1 }}>
+                      <Group gap="xs">
+                        <Badge color="grape" size="sm">Task</Badge>
+                        <Text fw={500}>{task.title}</Text>
+                      </Group>
+                      {task.notes && (
+                        <Text size="sm" c="dimmed" mt="xs" lineClamp={2}>
+                          {task.notes}
+                        </Text>
+                      )}
+                      <Group gap="xs" mt="xs">
+                        <Badge size="xs" color={
+                          task.priority === 'high' ? 'red' :
+                          task.priority === 'medium' ? 'yellow' : 'blue'
+                        }>
+                          {task.priority}
+                        </Badge>
+                        <Text size="xs" c="dimmed">
+                          📅 Due: {dayjs(task.dueDate).format('MMMM D, YYYY [at] h:mm A')}
+                        </Text>
+                      </Group>
+                    </div>
+                  </Group>
+                </Card>
+              ))}
+
+              {upcomingShoppingLists.map((list) => (
+                <Card
+                  key={`upcoming-shopping-${list.id}`}
+                  shadow="sm"
+                  padding="md"
+                  radius="md"
+                  withBorder
+                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  onClick={() => {
+                    setSelectedShoppingList(list);
+                    setShoppingListDetailModalOpened(true);
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <Group justify="space-between">
+                    <div style={{ flex: 1 }}>
+                      <Group gap="xs">
+                        <Badge color="green" size="sm">Shopping List</Badge>
+                        {list.isFamilyList && <Badge color="blue" size="xs" variant="light">Family List</Badge>}
+                        <Text fw={500}>{list.name}</Text>
+                      </Group>
+                      {list.description && (
+                        <Text size="sm" c="dimmed" mt="xs" lineClamp={1}>
+                          {list.description}
+                        </Text>
+                      )}
+                      {list.event && (
+                        <Text size="sm" c="dimmed" mt="xs">
+                          📅 {list.event.title} - {dayjs(list.event.startTime).format('MMMM D, YYYY [at] h:mm A')}
                         </Text>
                       )}
                       {list.items && list.items.length > 0 && (
