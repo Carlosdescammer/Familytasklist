@@ -18,9 +18,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Store familyId and userId for type safety
-    const familyId = session.user.familyId;
-    const userId = session.user.id;
+    // Store familyId and userId for type safety (we know they're non-null from the check above)
+    const familyId = session.user.familyId!;
+    const userId = session.user.id!;
 
     const body = await req.json();
     const data = createShoppingListSchema.parse(body);
