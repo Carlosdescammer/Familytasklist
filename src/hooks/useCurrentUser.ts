@@ -3,7 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 
-type DbUser = {
+type DbUserRaw = {
   id: string;
   clerkId: string | null;
   email: string;
@@ -15,6 +15,10 @@ type DbUser = {
   familyBucks: string;
   totalPointsEarned: string;
   pointsPerTask: string;
+};
+
+type DbUser = Omit<DbUserRaw, 'allowedPages'> & {
+  allowedPages: string[] | null;
 };
 
 export function useCurrentUser() {
@@ -35,8 +39,17 @@ export function useCurrentUser() {
       try {
         const res = await fetch('/api/users/me');
         if (res.ok) {
-          const data = await res.json();
-          setDbUser(data);
+          const data: DbUserRaw = await res.json();
+
+          // Parse allowedPages JSON string to array
+          const parsedUser: DbUser = {
+            ...data,
+            allowedPages: data.allowedPages
+              ? JSON.parse(data.allowedPages)
+              : null,
+          };
+
+          setDbUser(parsedUser);
         } else {
           setDbUser(null);
         }
