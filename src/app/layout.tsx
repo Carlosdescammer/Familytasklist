@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
@@ -9,12 +9,15 @@ export const metadata: Metadata = {
   title: 'FamilyList - Family Productivity App',
   description: 'Shared calendar, shopping lists, and tasks for your family',
   manifest: '/manifest.json',
-  themeColor: '#228be6',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'FamilyList',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#228be6',
 };
 
 export default function RootLayout({
