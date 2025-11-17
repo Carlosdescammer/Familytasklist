@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { recipes } from '@/db/schema';
-import { auth } from '@/auth';
+import { auth } from '@/lib/auth-helpers';
 import { eq, and, sql } from 'drizzle-orm';
 
 // POST /api/recipes/[id]/favorite - Toggle favorite status for a recipe

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { shoppingItems, shoppingLists, families } from '@/db/schema';
-import { auth } from '@/auth';
+import { auth } from '@/lib/auth-helpers';
 import { eq, and, isNull } from 'drizzle-orm';
 import { decrypt } from '@/lib/encryption';
 import { analyzeShoppingItem } from '@/lib/gemini';
