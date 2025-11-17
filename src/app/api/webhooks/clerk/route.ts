@@ -2,10 +2,50 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { Webhook } from 'svix';
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    // Get webhook secret from environment
+    const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
+
+    // Read body once as text
+    const bodyText = await req.text();
+    let payload;
+
+    // Verify webhook signature if secret is available
+    if (webhookSecret) {
+      const svixId = req.headers.get('svix-id');
+      const svixTimestamp = req.headers.get('svix-timestamp');
+      const svixSignature = req.headers.get('svix-signature');
+
+      if (!svixId || !svixTimestamp || !svixSignature) {
+        return NextResponse.json(
+          { error: 'Missing Svix headers' },
+          { status: 400 }
+        );
+      }
+
+      const wh = new Webhook(webhookSecret);
+
+      try {
+        payload = wh.verify(bodyText, {
+          'svix-id': svixId,
+          'svix-timestamp': svixTimestamp,
+          'svix-signature': svixSignature,
+        }) as any;
+      } catch (err) {
+        console.error('Webhook signature verification failed:', err);
+        return NextResponse.json(
+          { error: 'Invalid signature' },
+          { status: 400 }
+        );
+      }
+    } else {
+      console.warn('CLERK_WEBHOOK_SECRET not set - skipping signature verification');
+      payload = JSON.parse(bodyText);
+    }
+
     const { type, data } = payload;
 
     console.log('Clerk webhook received:', type);
