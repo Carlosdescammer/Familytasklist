@@ -21,6 +21,7 @@ export const families = pgTable('families', {
 // Users table
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
+  clerkId: text('clerk_id').unique(), // Clerk user ID for authentication
   familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }), // Primary family (for backward compatibility)
   activeFamilyId: uuid('active_family_id').references(() => families.id, { onDelete: 'set null' }), // Currently active family context
   email: text('email').unique().notNull(),

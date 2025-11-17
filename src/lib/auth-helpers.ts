@@ -9,27 +9,41 @@ import { eq } from 'drizzle-orm';
  */
 export async function getCurrentUser() {
   const { userId: clerkUserId } = await clerkAuth();
-  
+
   if (!clerkUserId) {
     return null;
   }
 
-  // Get Clerk user to access email
-  const clerkUser = await currentUser();
-  if (!clerkUser?.primaryEmailAddress?.emailAddress) {
-    return null;
-  }
-
-  const userEmail = clerkUser.primaryEmailAddress.emailAddress;
-
-  // Get user from database using email
-  // TODO: Add clerkId column to users table for better performance
-  const user = await db.query.users.findFirst({
-    where: eq(users.email, userEmail),
+  // Get user from database using Clerk ID
+  let user = await db.query.users.findFirst({
+    where: eq(users.clerkId, clerkUserId),
     with: {
       family: true,
     },
   });
+
+  // Fallback: If user doesn't have clerkId set yet, try email lookup and update
+  if (!user) {
+    const clerkUser = await currentUser();
+    if (!clerkUser?.primaryEmailAddress?.emailAddress) {
+      return null;
+    }
+
+    const userEmail = clerkUser.primaryEmailAddress.emailAddress;
+    user = await db.query.users.findFirst({
+      where: eq(users.email, userEmail),
+      with: {
+        family: true,
+      },
+    });
+
+    // Update user with clerkId for future lookups
+    if (user) {
+      await db.update(users)
+        .set({ clerkId: clerkUserId })
+        .where(eq(users.id, user.id));
+    }
+  }
 
   if (!user) {
     return null;
@@ -38,6 +52,7 @@ export async function getCurrentUser() {
   return {
     user: {
       id: user.id,
+      clerkId: user.clerkId,
       email: user.email,
       name: user.name,
       role: user.role,
