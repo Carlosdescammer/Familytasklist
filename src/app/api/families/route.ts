@@ -62,7 +62,6 @@ export async function GET() {
       where: eq(families.id, session.user.familyId),
       with: {
         users: {
-          where: eq(users.familyId, session.user.familyId),
           columns: {
             id: true,
             email: true,

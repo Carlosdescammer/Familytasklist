@@ -200,7 +200,12 @@ export const recipes = pgTable('recipes', {
 
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
-  users: many(users),
+  users: many(users, {
+    relationName: "primaryFamilyUsers"
+  }),
+  activeFamilyUsers: many(users, {
+    relationName: "activeFamilyUsers"
+  }),
   familyMembers: many(familyMembers),
   events: many(events),
   shoppingLists: many(shoppingLists),
@@ -213,10 +218,12 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   family: one(families, {
     fields: [users.familyId],
     references: [families.id],
+    relationName: "primaryFamilyUsers"
   }),
   activeFamily: one(families, {
     fields: [users.activeFamilyId],
     references: [families.id],
+    relationName: "activeFamilyUsers"
   }),
   familyMemberships: many(familyMembers),
   createdEvents: many(events),
