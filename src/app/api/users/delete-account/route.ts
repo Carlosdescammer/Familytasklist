@@ -15,7 +15,8 @@ export async function DELETE() {
 
     // Delete user from Clerk
     try {
-      await clerkClient.users.deleteUser(session.user.clerkId);
+      const client = await clerkClient();
+      await client.users.deleteUser(session.user.clerkId);
     } catch (clerkError) {
       console.error('Error deleting Clerk user:', clerkError);
       // Continue with database deletion even if Clerk deletion fails
