@@ -696,7 +696,7 @@ export default function SettingsPage() {
               </Group>
 
               {/* Award Points */}
-              <Card padding="md" withBorder bg="blue.0">
+              <Card padding="md" withBorder>
                 <Stack gap="sm">
                   <Text size="sm" fw={500}>
                     Award Family Bucks

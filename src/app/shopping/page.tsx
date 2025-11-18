@@ -1307,7 +1307,7 @@ export default function ShoppingPage() {
                 <Text size="sm" fw={500} mb="xs">
                   Price Information
                 </Text>
-                <Card padding="md" withBorder bg="gray.0" style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                <Card padding="md" withBorder>
                   <Stack gap="xs">
                     {selectedItem.currentPrice && (
                       <Group gap="xs">
@@ -1395,7 +1395,7 @@ export default function ShoppingPage() {
                           </Badge>
                         )}
                         {brandOptions.map((opt: any, idx: number) => (
-                          <Card key={idx} padding="sm" withBorder bg="gray.0" style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                          <Card key={idx} padding="sm" withBorder>
                             <Stack gap="xs">
                               <Group justify="space-between">
                                 <Text size="sm" fw={600} c="dark">{opt.brand}</Text>
@@ -1430,7 +1430,7 @@ export default function ShoppingPage() {
                         </Text>
                         <Stack gap="xs">
                           {metadata.alternatives.map((alt: string, idx: number) => (
-                            <Card key={idx} padding="sm" withBorder bg="gray.0" style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                            <Card key={idx} padding="sm" withBorder>
                               <Text size="sm" c="dark">{alt}</Text>
                             </Card>
                           ))}
