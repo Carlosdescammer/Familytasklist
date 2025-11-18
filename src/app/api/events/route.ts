@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { events } from '@/db/schema';
+import { events, users } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
 import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
+import { syncEventToGoogleCalendar } from '@/lib/google-calendar';
 
 const createEventSchema = z.object({
   title: z.string().min(1).max(200),
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = createEventSchema.parse(body);
 
+    // Create event in database
     const [event] = await db
       .insert(events)
       .values({
@@ -65,6 +67,40 @@ export async function POST(req: NextRequest) {
         createdBy: session.user.id,
       })
       .returning();
+
+    // Try to sync to Google Calendar if user has OAuth tokens
+    try {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, session.user.id),
+        columns: {
+          googleAccessToken: true,
+        },
+      });
+
+      if (user?.googleAccessToken) {
+        const googleEventId = await syncEventToGoogleCalendar(session.user.id, {
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          startTime: event.startTime,
+          endTime: event.endTime,
+        });
+
+        // Update event with Google Calendar ID
+        if (googleEventId) {
+          await db
+            .update(events)
+            .set({ googleEventId })
+            .where(eq(events.id, event.id));
+
+          // Return updated event
+          return NextResponse.json({ ...event, googleEventId }, { status: 201 });
+        }
+      }
+    } catch (googleError) {
+      console.error('Failed to sync to Google Calendar:', googleError);
+      // Don't fail the request - event was created successfully
+    }
 
     return NextResponse.json(event, { status: 201 });
   } catch (error) {

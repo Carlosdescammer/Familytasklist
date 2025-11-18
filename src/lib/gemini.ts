@@ -392,20 +392,49 @@ Respond in valid JSON format:
  * @returns true if valid, false otherwise
  */
 export async function testApiKey(apiKey: string, provider: AIProvider = 'gemini'): Promise<boolean> {
+  if (!apiKey || apiKey.trim().length === 0) {
+    console.error('API key test failed: Empty API key provided');
+    return false;
+  }
+
   if (provider === 'openai') {
     try {
-      const openai = new OpenAI({ apiKey });
+      const openai = new OpenAI({
+        apiKey,
+        timeout: 10000, // 10 second timeout
+      });
+
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: 'Say OK' }],
         max_tokens: 5,
       });
-      return !!completion.choices[0].message.content;
-    } catch (error) {
-      console.error('OpenAI API key test failed:', error);
+
+      const hasContent = !!completion.choices[0]?.message?.content;
+      console.log('OpenAI API key test result:', hasContent ? 'SUCCESS' : 'FAILED (no content)');
+      return hasContent;
+    } catch (error: any) {
+      console.error('OpenAI API key test failed:', {
+        message: error?.message,
+        status: error?.status,
+        type: error?.type,
+        code: error?.code,
+      });
+
+      // Log specific error types to help with debugging
+      if (error?.status === 401) {
+        console.error('OpenAI authentication failed - API key is invalid');
+      } else if (error?.status === 429) {
+        console.error('OpenAI rate limit exceeded');
+      } else if (error?.code === 'ENOTFOUND' || error?.code === 'ETIMEDOUT') {
+        console.error('OpenAI network error - cannot reach API');
+      }
+
       return false;
     }
   }
+
+  // Gemini validation
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
@@ -414,9 +443,14 @@ export async function testApiKey(apiKey: string, provider: AIProvider = 'gemini'
     const response = result.response;
     const text = response.text();
 
-    return text.length > 0;
-  } catch (error) {
-    console.error('API key test failed:', error);
+    const isValid = text.length > 0;
+    console.log('Gemini API key test result:', isValid ? 'SUCCESS' : 'FAILED (no content)');
+    return isValid;
+  } catch (error: any) {
+    console.error('Gemini API key test failed:', {
+      message: error?.message,
+      status: error?.status,
+    });
     return false;
   }
 }
