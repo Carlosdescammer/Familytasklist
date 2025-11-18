@@ -295,6 +295,35 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      const res = await fetch('/api/users/delete-account', {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete account');
+      }
+
+      notifications.show({
+        title: 'Account Deleted',
+        message: 'Your account has been successfully deleted',
+        color: 'green',
+      });
+
+      // Redirect to landing page after a short delay
+      setTimeout(() => {
+        window.location.href = '/landing';
+      }, 2000);
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to delete account',
+        color: 'red',
+      });
+    }
+  };
+
   const AVAILABLE_PAGES = [
     { value: 'calendar', label: 'Calendar' },
     { value: 'tasks', label: 'Tasks' },
@@ -578,6 +607,28 @@ export default function SettingsPage() {
             </Stack>
           </Card>
         )}
+
+        <Card shadow="sm" padding="lg" radius="md" withBorder style={{ borderColor: 'var(--mantine-color-red-6)' }}>
+          <Stack gap="md">
+            <Title order={3} c="red">Danger Zone</Title>
+            <Alert color="red" icon={<IconInfoCircle size={16} />}>
+              <Text size="sm">
+                Deleting your account is permanent and cannot be undone. All your data will be removed.
+              </Text>
+            </Alert>
+            <Button
+              color="red"
+              variant="outline"
+              onClick={() => {
+                if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                  handleDeleteAccount();
+                }
+              }}
+            >
+              Delete My Account
+            </Button>
+          </Stack>
+        </Card>
       </Stack>
 
       {/* Child Settings Modal */}

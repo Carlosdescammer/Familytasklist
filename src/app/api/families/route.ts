@@ -57,10 +57,12 @@ export async function GET() {
       return NextResponse.json({ error: 'No family found' }, { status: 404 });
     }
 
+    // Get family with users using the primary familyId relation
     const family = await db.query.families.findFirst({
       where: eq(families.id, session.user.familyId),
       with: {
         users: {
+          where: eq(users.familyId, session.user.familyId),
           columns: {
             id: true,
             email: true,
