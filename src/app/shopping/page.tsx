@@ -1319,15 +1319,15 @@ export default function ShoppingPage() {
                     )}
                     {selectedItem.estimatedPrice && (
                       <Group gap="xs">
-                        <Text size="sm" c="dark">Estimated Price:</Text>
-                        <Text size="sm" fw={600} c="dark">
+                        <Text size="sm">Estimated Price:</Text>
+                        <Text size="sm" fw={600}>
                           ${selectedItem.estimatedPrice}
                         </Text>
                       </Group>
                     )}
                     {selectedItem.priceRange && (
                       <Group gap="xs">
-                        <Text size="sm" c="dark">Typical Range:</Text>
+                        <Text size="sm">Typical Range:</Text>
                         <Text size="sm" c="gray.7">
                           {selectedItem.priceRange}
                         </Text>
@@ -1363,7 +1363,7 @@ export default function ShoppingPage() {
                           <Card key={idx} padding="sm" withBorder style={{ backgroundColor: '#FFF4E6', borderColor: '#FFA94D' }}>
                             <Group gap="xs" align="flex-start">
                               <Text size="lg" style={{ flexShrink: 0 }}>🏷️</Text>
-                              <Text size="sm" c="dark" fw={500} style={{ flex: 1 }}>
+                              <Text size="sm" fw={500} style={{ flex: 1 }}>
                                 {deal}
                               </Text>
                             </Group>
@@ -1398,12 +1398,12 @@ export default function ShoppingPage() {
                           <Card key={idx} padding="sm" withBorder>
                             <Stack gap="xs">
                               <Group justify="space-between">
-                                <Text size="sm" fw={600} c="dark">{opt.brand}</Text>
+                                <Text size="sm" fw={600}>{opt.brand}</Text>
                                 <Text size="sm" fw={700} c="blue">${opt.price}</Text>
                               </Group>
                               <Text size="xs" c="dimmed">at {opt.store}</Text>
                               {opt.details && (
-                                <Text size="xs" c="gray.7">{opt.details}</Text>
+                                <Text size="xs" c="dimmed">{opt.details}</Text>
                               )}
                             </Stack>
                           </Card>
@@ -1431,7 +1431,7 @@ export default function ShoppingPage() {
                         <Stack gap="xs">
                           {metadata.alternatives.map((alt: string, idx: number) => (
                             <Card key={idx} padding="sm" withBorder>
-                              <Text size="sm" c="dark">{alt}</Text>
+                              <Text size="sm">{alt}</Text>
                             </Card>
                           ))}
                         </Stack>
@@ -1448,7 +1448,7 @@ export default function ShoppingPage() {
                             <Card key={idx} padding="sm" withBorder style={{ backgroundColor: '#E7F5FF' }}>
                               <Group gap="xs" align="flex-start">
                                 <IconInfoCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} color="#1971C2" />
-                                <Text size="sm" c="dark" style={{ flex: 1 }}>
+                                <Text size="sm" style={{ flex: 1 }}>
                                   {tip}
                                 </Text>
                               </Group>
