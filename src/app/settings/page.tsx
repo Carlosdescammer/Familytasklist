@@ -24,12 +24,14 @@ import {
   NumberInput,
   Checkbox,
   Divider,
+  Code,
 } from '@mantine/core';
-import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy } from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent } from '@tabler/icons-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
+import { generateCalendarToken } from '@/lib/calendar-token';
 
 const COMMON_STORES = [
   'Winn-Dixie',
@@ -172,6 +174,23 @@ export default function SettingsPage() {
     } finally {
       setIsJoiningFamily(false);
     }
+  };
+
+  const getCalendarFeedUrl = () => {
+    if (!user?.familyId) return '';
+    const token = generateCalendarToken(user.familyId);
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${baseUrl}/api/calendar/feed/${user.familyId}/${token}`;
+  };
+
+  const copyCalendarUrl = () => {
+    const url = getCalendarFeedUrl();
+    navigator.clipboard.writeText(url);
+    notifications.show({
+      title: 'Copied!',
+      message: 'Calendar subscription URL copied to clipboard',
+      color: 'green',
+    });
   };
 
   const handleSaveAiSettings = async () => {
@@ -540,14 +559,67 @@ export default function SettingsPage() {
 
         <Card shadow="sm" padding="lg" radius="md" withBorder>
           <Stack gap="md">
-            <Title order={3}>Google Calendar</Title>
-            <Text size="sm" c="dimmed">
-              Your Google Calendar is connected. Events you create in FamilyList will be synced to your
-              Google Calendar.
-            </Text>
-            <Button variant="outline" disabled>
-              Connected
-            </Button>
+            <Group>
+              <IconCalendarEvent size={24} />
+              <Title order={3}>Subscribe to Calendar</Title>
+            </Group>
+
+            <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+              <Text size="sm">
+                Subscribe to your family calendar in any calendar app (Google Calendar, Apple Calendar, Outlook, etc.)
+              </Text>
+            </Alert>
+
+            {user?.familyId ? (
+              <>
+                <div>
+                  <Text size="sm" fw={500} mb="xs">
+                    Calendar Subscription URL
+                  </Text>
+                  <Group gap="xs" align="flex-start">
+                    <Code style={{ flex: 1, wordBreak: 'break-all', padding: '8px', fontSize: '11px' }}>
+                      {getCalendarFeedUrl()}
+                    </Code>
+                    <CopyButton value={getCalendarFeedUrl()} timeout={2000}>
+                      {({ copied, copy }) => (
+                        <Tooltip label={copied ? 'Copied!' : 'Copy URL'} withArrow position="right">
+                          <ActionIcon
+                            color={copied ? 'teal' : 'blue'}
+                            variant="light"
+                            onClick={copy}
+                          >
+                            {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                          </ActionIcon>
+                        </Tooltip>
+                      )}
+                    </CopyButton>
+                  </Group>
+                </div>
+
+                <Divider />
+
+                <div>
+                  <Text size="sm" fw={500} mb="xs">
+                    How to Subscribe:
+                  </Text>
+                  <Stack gap="xs">
+                    <Text size="xs">
+                      <strong>• Google Calendar:</strong> Settings → "Add calendar" → "From URL" → Paste the URL
+                    </Text>
+                    <Text size="xs">
+                      <strong>• Apple Calendar:</strong> File → "New Calendar Subscription" → Paste the URL
+                    </Text>
+                    <Text size="xs">
+                      <strong>• Outlook:</strong> Add calendar → "Subscribe from web" → Paste the URL
+                    </Text>
+                  </Stack>
+                </div>
+              </>
+            ) : (
+              <Text size="sm" c="dimmed">
+                Join a family to get your calendar subscription URL
+              </Text>
+            )}
           </Stack>
         </Card>
 
