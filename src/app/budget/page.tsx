@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import {
   Container,
@@ -138,12 +138,7 @@ export default function BudgetPage() {
   const [expenseDate, setExpenseDate] = useState<Date | null>(new Date());
   const [expenseNotes, setExpenseNotes] = useState('');
 
-  useEffect(() => {
-    fetchBudgetStats();
-    fetchExpenses();
-  }, [selectedMonth]);
-
-  const fetchBudgetStats = async () => {
+  const fetchBudgetStats = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/budget-stats?month=${selectedMonth}`);
@@ -156,9 +151,9 @@ export default function BudgetPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMonth]);
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     try {
       const res = await fetch(`/api/expenses?month=${selectedMonth}`);
       if (res.ok) {
@@ -168,7 +163,12 @@ export default function BudgetPage() {
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
-  };
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    fetchBudgetStats();
+    fetchExpenses();
+  }, [fetchBudgetStats, fetchExpenses]);
 
   const handleCreateOrUpdateBudget = async () => {
     try {
@@ -594,7 +594,7 @@ export default function BudgetPage() {
               label="Total Budget"
               placeholder="Enter total budget"
               value={budgetAmount}
-              onChange={setBudgetAmount}
+              onChange={(value) => setBudgetAmount(value as number | '')}
               min={0}
               prefix="$"
               decimalScale={2}
@@ -604,7 +604,7 @@ export default function BudgetPage() {
               label="Savings Goal"
               placeholder="Optional savings goal"
               value={savingsGoal}
-              onChange={setSavingsGoal}
+              onChange={(value) => setSavingsGoal(value as number | '')}
               min={0}
               prefix="$"
               decimalScale={2}
@@ -649,7 +649,7 @@ export default function BudgetPage() {
               label="Amount"
               placeholder="Enter amount"
               value={expenseAmount}
-              onChange={setExpenseAmount}
+              onChange={(value) => setExpenseAmount(value as number | '')}
               min={0}
               prefix="$"
               decimalScale={2}
