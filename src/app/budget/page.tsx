@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import {
   Container,
   Title,
@@ -108,8 +108,7 @@ interface BudgetStats {
 }
 
 export default function BudgetPage() {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useCurrentUser();
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
