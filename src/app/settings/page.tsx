@@ -26,7 +26,7 @@ import {
   Divider,
   Code,
 } from '@mantine/core';
-import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent } from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent, IconChartBar, IconRobot } from '@tabler/icons-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
@@ -80,8 +80,13 @@ export default function SettingsPage() {
   const [joinFamilyCode, setJoinFamilyCode] = useState('');
   const [isJoiningFamily, setIsJoiningFamily] = useState(false);
 
+  // AI Usage stats state
+  const [aiUsageStats, setAiUsageStats] = useState<any>(null);
+  const [loadingAiStats, setLoadingAiStats] = useState(false);
+
   useEffect(() => {
     fetchFamily();
+    fetchAiUsageStats();
   }, []);
 
   const fetchFamily = async () => {
@@ -99,6 +104,21 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error fetching family:', error);
+    }
+  };
+
+  const fetchAiUsageStats = async () => {
+    try {
+      setLoadingAiStats(true);
+      const res = await fetch('/api/ai-usage');
+      if (res.ok) {
+        const data = await res.json();
+        setAiUsageStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching AI usage stats:', error);
+    } finally {
+      setLoadingAiStats(false);
     }
   };
 
@@ -758,6 +778,142 @@ export default function SettingsPage() {
                   Save AI Settings
                 </Button>
               </Group>
+            </Stack>
+          </Card>
+        )}
+
+        {/* AI Usage Statistics */}
+        {user?.role === 'parent' && aiEnabled && (
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Stack gap="md">
+              <Group justify="space-between">
+                <Group>
+                  <IconChartBar size={24} />
+                  <Title order={3}>AI Usage Statistics</Title>
+                </Group>
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  onClick={fetchAiUsageStats}
+                  loading={loadingAiStats}
+                >
+                  Refresh
+                </Button>
+              </Group>
+
+              {loadingAiStats ? (
+                <Group justify="center" py="xl">
+                  <Loader size="sm" />
+                  <Text size="sm" c="dimmed">Loading usage data...</Text>
+                </Group>
+              ) : aiUsageStats ? (
+                <>
+                  <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+                    <Text size="sm">
+                      Track your family's AI API usage to monitor costs and optimize your usage.
+                    </Text>
+                  </Alert>
+
+                  {/* Overall Stats */}
+                  <div>
+                    <Text size="sm" fw={500} mb="xs">All-Time Stats</Text>
+                    <Group gap="lg">
+                      <div>
+                        <Text size="xs" c="dimmed">Total API Calls</Text>
+                        <Text size="xl" fw={700}>{aiUsageStats.overall.totalCalls}</Text>
+                      </div>
+                      <div>
+                        <Text size="xs" c="dimmed">Total Cost</Text>
+                        <Text size="xl" fw={700} c="blue">${aiUsageStats.overall.totalCost.toFixed(4)}</Text>
+                      </div>
+                      <div>
+                        <Text size="xs" c="dimmed">Success Rate</Text>
+                        <Text size="xl" fw={700} c="green">{aiUsageStats.overall.successRate}%</Text>
+                      </div>
+                    </Group>
+                  </div>
+
+                  <Divider />
+
+                  {/* Current Month Stats */}
+                  <div>
+                    <Text size="sm" fw={500} mb="xs">This Month</Text>
+                    <Group gap="lg">
+                      <div>
+                        <Text size="xs" c="dimmed">API Calls</Text>
+                        <Text size="lg" fw={600}>{aiUsageStats.currentMonth.totalCalls}</Text>
+                      </div>
+                      <div>
+                        <Text size="xs" c="dimmed">Cost</Text>
+                        <Text size="lg" fw={600} c="blue">${aiUsageStats.currentMonth.totalCost.toFixed(4)}</Text>
+                      </div>
+                      {aiUsageStats.currentMonth.totalTokens > 0 && (
+                        <div>
+                          <Text size="xs" c="dimmed">Tokens Used</Text>
+                          <Text size="lg" fw={600}>{aiUsageStats.currentMonth.totalTokens.toLocaleString()}</Text>
+                        </div>
+                      )}
+                    </Group>
+                  </div>
+
+                  {/* Usage by Feature */}
+                  {aiUsageStats.byFeature && aiUsageStats.byFeature.length > 0 && (
+                    <>
+                      <Divider />
+                      <div>
+                        <Text size="sm" fw={500} mb="xs">Usage by Feature</Text>
+                        <Stack gap="xs">
+                          {aiUsageStats.byFeature.map((feature: any) => (
+                            <Group key={feature.feature} justify="space-between">
+                              <Group gap="xs">
+                                <IconRobot size={16} />
+                                <Text size="sm">{feature.feature.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</Text>
+                              </Group>
+                              <Group gap="md">
+                                <Badge size="sm" variant="light">{feature.count} calls</Badge>
+                                {feature.totalCost > 0 && (
+                                  <Text size="xs" c="dimmed">${feature.totalCost.toFixed(4)}</Text>
+                                )}
+                              </Group>
+                            </Group>
+                          ))}
+                        </Stack>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Usage by Provider */}
+                  {aiUsageStats.byProvider && aiUsageStats.byProvider.length > 0 && (
+                    <>
+                      <Divider />
+                      <div>
+                        <Text size="sm" fw={500} mb="xs">Usage by Provider</Text>
+                        <Stack gap="xs">
+                          {aiUsageStats.byProvider.map((provider: any) => (
+                            <Group key={provider.provider} justify="space-between">
+                              <Group gap="xs">
+                                <Badge color={provider.provider === 'openai' ? 'green' : 'blue'}>
+                                  {provider.provider === 'openai' ? 'OpenAI' : 'Google Gemini'}
+                                </Badge>
+                              </Group>
+                              <Group gap="md">
+                                <Text size="sm">{provider.count} calls</Text>
+                                {provider.totalCost > 0 && (
+                                  <Text size="sm" fw={600}>${provider.totalCost.toFixed(4)}</Text>
+                                )}
+                              </Group>
+                            </Group>
+                          ))}
+                        </Stack>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <Text size="sm" c="dimmed" ta="center" py="md">
+                  No usage data available yet. Start using AI features to see your usage statistics here.
+                </Text>
+              )}
             </Stack>
           </Card>
         )}

@@ -253,6 +253,25 @@ export const recipeComments = pgTable('recipe_comments', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// AI Usage Logs table
+export const aiUsageLogs = pgTable('ai_usage_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  provider: text('provider').notNull(), // 'openai' or 'gemini'
+  feature: text('feature').notNull(), // 'recipe_generation', 'shopping_analysis', etc.
+  tokensUsed: integer('tokens_used'), // Tokens consumed (if applicable)
+  cost: numeric('cost', { precision: 10, scale: 6 }), // Estimated cost in USD
+  requestData: text('request_data'), // JSON of request details (optional)
+  responseData: text('response_data'), // JSON of response details (optional)
+  success: boolean('success').default(true).notNull(),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
   users: many(users, {
@@ -412,6 +431,17 @@ export const recipeCommentsRelations = relations(recipeComments, ({ one }) => ({
   }),
 }));
 
+export const aiUsageLogsRelations = relations(aiUsageLogs, ({ one }) => ({
+  family: one(families, {
+    fields: [aiUsageLogs.familyId],
+    references: [families.id],
+  }),
+  user: one(users, {
+    fields: [aiUsageLogs.userId],
+    references: [users.id],
+  }),
+}));
+
 // NextAuth.js adapter tables (required by @auth/drizzle-adapter)
 export const authUsers = pgTable('user', {
   id: text('id').notNull().primaryKey(),
@@ -490,3 +520,5 @@ export type RecipeRating = typeof recipeRatings.$inferSelect;
 export type NewRecipeRating = typeof recipeRatings.$inferInsert;
 export type RecipeComment = typeof recipeComments.$inferSelect;
 export type NewRecipeComment = typeof recipeComments.$inferInsert;
+export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
+export type NewAiUsageLog = typeof aiUsageLogs.$inferInsert;
