@@ -17,20 +17,14 @@ import {
   MultiSelect,
   ColorInput,
   Checkbox,
-  ActionIcon,
-  Tooltip,
-  Code,
-  Alert,
-  Collapse,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
 import { Calendar } from '@mantine/dates';
-import { IconPlus, IconTrash, IconEdit, IconCopy, IconCalendarEvent, IconChevronDown, IconChevronUp, IconInfoCircle } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconEdit } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { generateCalendarToken } from '@/lib/calendar-token';
 import dayjs from 'dayjs';
 
 type Event = {
@@ -90,7 +84,6 @@ export default function CalendarPage() {
   const [selectedShoppingList, setSelectedShoppingList] = useState<ShoppingList | null>(null);
   const [editingShoppingList, setEditingShoppingList] = useState<ShoppingList | null>(null);
   const [familyMembers, setFamilyMembers] = useState<any[]>([]);
-  const [subscriptionOpened, setSubscriptionOpened] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -359,23 +352,6 @@ export default function CalendarPage() {
     }
   };
 
-  const getCalendarFeedUrl = () => {
-    if (!user?.familyId) return '';
-    const token = generateCalendarToken(user.familyId);
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    return `${baseUrl}/api/calendar/feed/${user.familyId}/${token}`;
-  };
-
-  const copyCalendarUrl = () => {
-    const url = getCalendarFeedUrl();
-    navigator.clipboard.writeText(url);
-    notifications.show({
-      title: 'Copied!',
-      message: 'Calendar subscription URL copied to clipboard',
-      color: 'green',
-    });
-  };
-
   const resetForm = () => {
     setFormData({
       title: '',
@@ -504,48 +480,6 @@ export default function CalendarPage() {
             Add Event
           </Button>
         </Group>
-
-        {user?.familyId && (
-          <Alert icon={<IconCalendarEvent size={20} />} title="Subscribe to Calendar" color="blue" variant="light">
-            <Stack gap="xs">
-              <Text size="sm">
-                Subscribe to your family calendar in any calendar app (Google Calendar, Apple Calendar, Outlook, etc.)
-              </Text>
-              <Group gap="xs">
-                <Button
-                  size="xs"
-                  variant="light"
-                  leftSection={subscriptionOpened ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
-                  onClick={() => setSubscriptionOpened(!subscriptionOpened)}
-                >
-                  {subscriptionOpened ? 'Hide' : 'Show'} Subscription URL
-                </Button>
-              </Group>
-              <Collapse in={subscriptionOpened}>
-                <Stack gap="sm">
-                  <Group gap="xs" align="flex-start">
-                    <Code style={{ flex: 1, wordBreak: 'break-all', padding: '8px' }}>
-                      {getCalendarFeedUrl()}
-                    </Code>
-                    <Tooltip label="Copy URL">
-                      <ActionIcon variant="light" color="blue" onClick={copyCalendarUrl}>
-                        <IconCopy size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
-                  <Alert icon={<IconInfoCircle size={16} />} color="cyan" variant="light">
-                    <Text size="xs">
-                      <strong>How to use:</strong><br />
-                      • <strong>Google Calendar:</strong> Settings → "Add calendar" → "From URL" → Paste the URL<br />
-                      • <strong>Apple Calendar:</strong> File → "New Calendar Subscription" → Paste the URL<br />
-                      • <strong>Outlook:</strong> Add calendar → "Subscribe from web" → Paste the URL
-                    </Text>
-                  </Alert>
-                </Stack>
-              </Collapse>
-            </Stack>
-          </Alert>
-        )}
 
         <Calendar
           date={selectedDate}
