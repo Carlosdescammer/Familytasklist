@@ -272,6 +272,38 @@ export const aiUsageLogs = pgTable('ai_usage_logs', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Budgets table
+export const budgets = pgTable('budgets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  month: text('month').notNull(), // Format: "YYYY-MM"
+  totalBudget: numeric('total_budget', { precision: 10, scale: 2 }).notNull(),
+  savingsGoal: numeric('savings_goal', { precision: 10, scale: 2 }).default('0').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Expenses table
+export const expenses = pgTable('expenses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  category: text('category').notNull(), // 'groceries', 'utilities', 'entertainment', etc.
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  description: text('description').notNull(),
+  expenseDate: timestamp('expense_date', { withTimezone: true }).notNull(),
+  receiptUrl: text('receipt_url'), // Optional receipt image
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
   users: many(users, {
@@ -442,6 +474,24 @@ export const aiUsageLogsRelations = relations(aiUsageLogs, ({ one }) => ({
   }),
 }));
 
+export const budgetsRelations = relations(budgets, ({ one }) => ({
+  family: one(families, {
+    fields: [budgets.familyId],
+    references: [families.id],
+  }),
+}));
+
+export const expensesRelations = relations(expenses, ({ one }) => ({
+  family: one(families, {
+    fields: [expenses.familyId],
+    references: [families.id],
+  }),
+  user: one(users, {
+    fields: [expenses.userId],
+    references: [users.id],
+  }),
+}));
+
 // NextAuth.js adapter tables (required by @auth/drizzle-adapter)
 export const authUsers = pgTable('user', {
   id: text('id').notNull().primaryKey(),
@@ -522,3 +572,7 @@ export type RecipeComment = typeof recipeComments.$inferSelect;
 export type NewRecipeComment = typeof recipeComments.$inferInsert;
 export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
 export type NewAiUsageLog = typeof aiUsageLogs.$inferInsert;
+export type Budget = typeof budgets.$inferSelect;
+export type NewBudget = typeof budgets.$inferInsert;
+export type Expense = typeof expenses.$inferSelect;
+export type NewExpense = typeof expenses.$inferInsert;

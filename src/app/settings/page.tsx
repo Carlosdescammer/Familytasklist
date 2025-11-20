@@ -199,7 +199,17 @@ export default function SettingsPage() {
   const getCalendarFeedUrl = () => {
     if (!user?.familyId) return '';
     const token = generateCalendarToken(user.familyId);
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
+    // Get base URL and force HTTPS in production
+    let baseUrl = '';
+    if (typeof window !== 'undefined') {
+      baseUrl = window.location.origin;
+      // Force HTTPS for production domains (not localhost)
+      if (!baseUrl.includes('localhost') && baseUrl.startsWith('http://')) {
+        baseUrl = baseUrl.replace('http://', 'https://');
+      }
+    }
+
     return `${baseUrl}/api/calendar/feed/${user.familyId}/${token}`;
   };
 
