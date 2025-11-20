@@ -41,6 +41,7 @@ import {
   IconChartBar,
 } from '@tabler/icons-react';
 import { DateInput } from '@mantine/dates';
+import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
 
 const EXPENSE_CATEGORIES = [
@@ -317,8 +318,9 @@ export default function BudgetPage() {
   const isParent = user?.role === 'parent';
 
   return (
-    <PageAccessGuard pageName="budget">
-      <Container size="xl" py="xl">
+    <AppLayout>
+      <PageAccessGuard pageName="budget">
+        <Container size="xl" py="xl">
         <Stack gap="lg">
           {/* Header */}
           <Group justify="space-between">
@@ -689,6 +691,7 @@ export default function BudgetPage() {
           </Stack>
         </Modal>
       </Container>
-    </PageAccessGuard>
+      </PageAccessGuard>
+    </AppLayout>
   );
 }
