@@ -34,6 +34,7 @@ import {
   IconUsers,
   IconBell,
   IconChefHat,
+  IconWorld,
 } from '@tabler/icons-react';
 import { useClerk } from '@clerk/nextjs';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -47,6 +48,7 @@ const navItems = [
   { href: '/calendar', label: 'Calendar', icon: IconCalendar, pageName: 'calendar' as PageName },
   { href: '/shopping', label: 'Shopping', icon: IconShoppingCart, pageName: 'shopping' as PageName },
   { href: '/recipes', label: 'Recipes', icon: IconChefHat, pageName: null }, // Recipes has no restrictions
+  { href: '/community', label: 'Community', icon: IconWorld, pageName: 'community' as PageName },
   { href: '/tasks', label: 'Tasks', icon: IconCheckbox, pageName: 'tasks' as PageName },
   { href: '/family', label: 'Family', icon: IconUsers, pageName: 'family' as PageName },
   { href: '/settings', label: 'Settings', icon: IconSettings, pageName: 'settings' as PageName },
