@@ -74,6 +74,10 @@ export default function SettingsPage() {
   const [isSavingChildSettings, setIsSavingChildSettings] = useState(false);
   const [pointsToAward, setPointsToAward] = useState<number>(0);
 
+  // Join Family state
+  const [joinFamilyCode, setJoinFamilyCode] = useState('');
+  const [isJoiningFamily, setIsJoiningFamily] = useState(false);
+
   useEffect(() => {
     fetchFamily();
   }, []);
@@ -121,6 +125,52 @@ export default function SettingsPage() {
         message: 'Failed to update role',
         color: 'red',
       });
+    }
+  };
+
+  const handleJoinFamily = async () => {
+    if (!joinFamilyCode || joinFamilyCode.trim().length === 0) {
+      notifications.show({
+        title: 'Error',
+        message: 'Please enter a valid invite code',
+        color: 'red',
+      });
+      return;
+    }
+
+    try {
+      setIsJoiningFamily(true);
+      const res = await fetch('/api/families/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteCode: joinFamilyCode.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to join family');
+      }
+
+      notifications.show({
+        title: 'Success!',
+        message: `You've successfully joined ${data.family.name}`,
+        color: 'green',
+      });
+
+      setJoinFamilyCode('');
+      fetchFamily(); // Refresh family data
+
+      // Optionally reload the page to update all family-dependent data
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to join family',
+        color: 'red',
+      });
+    } finally {
+      setIsJoiningFamily(false);
     }
   };
 
@@ -448,6 +498,38 @@ export default function SettingsPage() {
                         );
                       })}
                   </Stack>
+                </div>
+
+                <Divider />
+
+                <div>
+                  <Text fw={500} mb="xs">
+                    Join Another Family
+                  </Text>
+                  <Text size="sm" c="dimmed" mb="md">
+                    You can be a member of multiple families. Enter an invite code to join another family.
+                  </Text>
+                  <Group align="flex-end">
+                    <TextInput
+                      placeholder="Enter invite code"
+                      value={joinFamilyCode}
+                      onChange={(e) => setJoinFamilyCode(e.target.value)}
+                      style={{ flex: 1 }}
+                      label="Family Invite Code"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !isJoiningFamily) {
+                          handleJoinFamily();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleJoinFamily}
+                      loading={isJoiningFamily}
+                      disabled={!joinFamilyCode.trim()}
+                    >
+                      Join Family
+                    </Button>
+                  </Group>
                 </div>
               </>
             ) : (
