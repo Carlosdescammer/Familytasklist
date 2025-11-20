@@ -198,6 +198,61 @@ export const recipes = pgTable('recipes', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Recipe Categories table
+export const recipeCategories = pgTable('recipe_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
+  description: text('description'),
+  icon: text('icon'), // Icon name or emoji
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Recipe Category Associations (many-to-many)
+export const recipeCategoryAssociations = pgTable('recipe_category_associations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  recipeId: uuid('recipe_id')
+    .references(() => recipes.id, { onDelete: 'cascade' })
+    .notNull(),
+  categoryId: uuid('category_id')
+    .references(() => recipeCategories.id, { onDelete: 'cascade' })
+    .notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Recipe Ratings table
+export const recipeRatings = pgTable('recipe_ratings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  recipeId: uuid('recipe_id')
+    .references(() => recipes.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  rating: integer('rating').notNull(), // 1-5 stars
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Recipe Comments table
+export const recipeComments = pgTable('recipe_comments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  recipeId: uuid('recipe_id')
+    .references(() => recipes.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  comment: text('comment').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
   users: many(users, {
@@ -298,7 +353,7 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   }),
 }));
 
-export const recipesRelations = relations(recipes, ({ one }) => ({
+export const recipesRelations = relations(recipes, ({ one, many }) => ({
   family: one(families, {
     fields: [recipes.familyId],
     references: [families.id],
@@ -306,6 +361,54 @@ export const recipesRelations = relations(recipes, ({ one }) => ({
   creator: one(users, {
     fields: [recipes.createdBy],
     references: [users.id],
+  }),
+  ratings: many(recipeRatings),
+  comments: many(recipeComments),
+  categoryAssociations: many(recipeCategoryAssociations),
+}));
+
+export const recipeCategoriesRelations = relations(recipeCategories, ({ many }) => ({
+  recipeAssociations: many(recipeCategoryAssociations),
+}));
+
+export const recipeCategoryAssociationsRelations = relations(recipeCategoryAssociations, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [recipeCategoryAssociations.recipeId],
+    references: [recipes.id],
+  }),
+  category: one(recipeCategories, {
+    fields: [recipeCategoryAssociations.categoryId],
+    references: [recipeCategories.id],
+  }),
+}));
+
+export const recipeRatingsRelations = relations(recipeRatings, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [recipeRatings.recipeId],
+    references: [recipes.id],
+  }),
+  user: one(users, {
+    fields: [recipeRatings.userId],
+    references: [users.id],
+  }),
+  family: one(families, {
+    fields: [recipeRatings.familyId],
+    references: [families.id],
+  }),
+}));
+
+export const recipeCommentsRelations = relations(recipeComments, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [recipeComments.recipeId],
+    references: [recipes.id],
+  }),
+  user: one(users, {
+    fields: [recipeComments.userId],
+    references: [users.id],
+  }),
+  family: one(families, {
+    fields: [recipeComments.familyId],
+    references: [families.id],
   }),
 }));
 
@@ -379,3 +482,11 @@ export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
 export type Recipe = typeof recipes.$inferSelect;
 export type NewRecipe = typeof recipes.$inferInsert;
+export type RecipeCategory = typeof recipeCategories.$inferSelect;
+export type NewRecipeCategory = typeof recipeCategories.$inferInsert;
+export type RecipeCategoryAssociation = typeof recipeCategoryAssociations.$inferSelect;
+export type NewRecipeCategoryAssociation = typeof recipeCategoryAssociations.$inferInsert;
+export type RecipeRating = typeof recipeRatings.$inferSelect;
+export type NewRecipeRating = typeof recipeRatings.$inferInsert;
+export type RecipeComment = typeof recipeComments.$inferSelect;
+export type NewRecipeComment = typeof recipeComments.$inferInsert;
