@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth-helpers';
 import { eq } from 'drizzle-orm';
 import { familyMembers } from '@/db/schema';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/user/families - Get all families the user belongs to
 export async function GET() {
   try {
