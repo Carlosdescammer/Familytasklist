@@ -1360,10 +1360,10 @@ export default function ShoppingPage() {
                       </Text>
                       <Stack gap="xs">
                         {deals.map((deal: string, idx: number) => (
-                          <Card key={idx} padding="sm" withBorder style={{ backgroundColor: '#FFF4E6', borderColor: '#FFA94D' }}>
+                          <Card key={idx} padding="sm" withBorder style={{ borderColor: 'var(--mantine-color-orange-6)' }}>
                             <Group gap="xs" align="flex-start">
                               <Text size="lg" style={{ flexShrink: 0 }}>🏷️</Text>
-                              <Text size="sm" fw={500} style={{ flex: 1 }}>
+                              <Text size="sm" fw={500} c="orange" style={{ flex: 1 }}>
                                 {deal}
                               </Text>
                             </Group>
@@ -1445,10 +1445,10 @@ export default function ShoppingPage() {
                         </Text>
                         <Stack gap="xs">
                           {metadata.tips.map((tip: string, idx: number) => (
-                            <Card key={idx} padding="sm" withBorder style={{ backgroundColor: '#E7F5FF' }}>
+                            <Card key={idx} padding="sm" withBorder>
                               <Group gap="xs" align="flex-start">
-                                <IconInfoCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} color="#1971C2" />
-                                <Text size="sm" style={{ flex: 1 }}>
+                                <IconInfoCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} color="var(--mantine-color-blue-6)" />
+                                <Text size="sm" c="blue" style={{ flex: 1 }}>
                                   {tip}
                                 </Text>
                               </Group>
