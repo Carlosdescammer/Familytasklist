@@ -58,12 +58,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       : [];
 
     // Start analyzing items in the background (don't block the response)
+    // Ensure we have a valid provider, defaulting to 'gemini' if not set
+    const provider = (family.aiProvider || 'gemini') as 'gemini' | 'openai';
+
     analyzeItemsBatch(
       itemsToAnalyze,
       apiKey,
       preferredStores,
       family.location || undefined,
-      family.aiProvider as 'gemini' | 'openai'
+      provider
     ).catch((error) => {
       console.error('Background batch analysis failed:', error);
     });
@@ -91,11 +94,11 @@ async function analyzeItemsBatch(
   location: string | undefined,
   provider: 'gemini' | 'openai'
 ) {
-  console.log(`Starting batch analysis of ${items.length} items...`);
+  console.log(`Starting batch analysis of ${items.length} items using ${provider.toUpperCase()} provider...`);
 
   for (const item of items) {
     try {
-      console.log(`Analyzing item: ${item.name}...`);
+      console.log(`Analyzing item: ${item.name} with ${provider}...`);
 
       // Analyze the item
       const analysis = await analyzeShoppingItem(
@@ -130,10 +133,11 @@ async function analyzeItemsBatch(
       // Small delay between requests to avoid rate limiting
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      console.error(`Failed to analyze item ${item.name}:`, error);
+      console.error(`❌ Failed to analyze item "${item.name}" with ${provider}:`, error);
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
       // Continue with next item even if this one fails
     }
   }
 
-  console.log(`✓ Batch analysis complete!`);
+  console.log(`✓ Batch analysis complete! Provider: ${provider}`);
 }

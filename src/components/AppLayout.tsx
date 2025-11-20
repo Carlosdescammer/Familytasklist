@@ -169,21 +169,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               onChange={toggleNotif}
             >
               <Popover.Target>
-                <ActionIcon
-                  variant="default"
-                  size="lg"
-                  aria-label="Notifications"
-                  onClick={toggleNotif}
+                <Indicator
+                  disabled={unreadCount === 0}
+                  label={unreadCount}
+                  size={16}
+                  color="red"
+                  inline
                 >
-                  <Indicator
-                    disabled={unreadCount === 0}
-                    label={unreadCount}
-                    size={16}
-                    color="red"
+                  <ActionIcon
+                    variant="default"
+                    size="lg"
+                    aria-label="Notifications"
+                    onClick={toggleNotif}
                   >
                     <IconBell style={{ width: rem(20) }} />
-                  </Indicator>
-                </ActionIcon>
+                  </ActionIcon>
+                </Indicator>
               </Popover.Target>
 
               <Popover.Dropdown>

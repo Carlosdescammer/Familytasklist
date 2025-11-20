@@ -1,7 +1,7 @@
 'use client';
 
 import { Title, Grid, Card, Text, Group, Stack, Badge, Progress, Button, RingProgress, Center } from '@mantine/core';
-import { IconCalendar, IconShoppingCart, IconCheckbox, IconTrophy, IconStar, IconCoins, IconCheck } from '@tabler/icons-react';
+import { IconCalendar, IconShoppingCart, IconCheckbox, IconTrophy, IconStar, IconCoins, IconCheck, IconChefHat, IconUsers, IconSettings } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import AppLayout from '@/components/AppLayout';
@@ -369,16 +369,65 @@ export default function Dashboard() {
 
         <Card shadow="sm" padding="lg" radius="md" withBorder>
           <Stack gap="md">
-            <Group justify="space-between">
-              <Text size="lg" fw={500}>
-                Quick Links
-              </Text>
-              <Badge color="blue">Family App</Badge>
-            </Group>
-            <Text size="sm" c="dimmed">
-              Welcome to FamilyList! Use the navigation menu to manage your family's calendar,
-              shopping list, and tasks.
+            <Text size="lg" fw={500}>
+              Quick Links
             </Text>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <Card component="a" href="/calendar" padding="md" radius="md" withBorder style={{ cursor: 'pointer', textDecoration: 'none' }}>
+                  <Stack gap="xs" align="center">
+                    <IconCalendar size={32} color="var(--mantine-color-blue-6)" />
+                    <Text fw={500}>Calendar</Text>
+                    <Text size="xs" c="dimmed" ta="center">View upcoming events</Text>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <Card component="a" href="/shopping" padding="md" radius="md" withBorder style={{ cursor: 'pointer', textDecoration: 'none' }}>
+                  <Stack gap="xs" align="center">
+                    <IconShoppingCart size={32} color="var(--mantine-color-green-6)" />
+                    <Text fw={500}>Shopping</Text>
+                    <Text size="xs" c="dimmed" ta="center">Manage shopping lists</Text>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <Card component="a" href="/tasks" padding="md" radius="md" withBorder style={{ cursor: 'pointer', textDecoration: 'none' }}>
+                  <Stack gap="xs" align="center">
+                    <IconCheckbox size={32} color="var(--mantine-color-orange-6)" />
+                    <Text fw={500}>Tasks</Text>
+                    <Text size="xs" c="dimmed" ta="center">Track family tasks</Text>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <Card component="a" href="/recipes" padding="md" radius="md" withBorder style={{ cursor: 'pointer', textDecoration: 'none' }}>
+                  <Stack gap="xs" align="center">
+                    <IconChefHat size={32} color="var(--mantine-color-red-6)" />
+                    <Text fw={500}>Recipes</Text>
+                    <Text size="xs" c="dimmed" ta="center">Browse recipes</Text>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <Card component="a" href="/family" padding="md" radius="md" withBorder style={{ cursor: 'pointer', textDecoration: 'none' }}>
+                  <Stack gap="xs" align="center">
+                    <IconUsers size={32} color="var(--mantine-color-violet-6)" />
+                    <Text fw={500}>Family</Text>
+                    <Text size="xs" c="dimmed" ta="center">Manage family members</Text>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+                <Card component="a" href="/settings" padding="md" radius="md" withBorder style={{ cursor: 'pointer', textDecoration: 'none' }}>
+                  <Stack gap="xs" align="center">
+                    <IconSettings size={32} color="var(--mantine-color-gray-6)" />
+                    <Text fw={500}>Settings</Text>
+                    <Text size="xs" c="dimmed" ta="center">App preferences</Text>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+            </Grid>
           </Stack>
         </Card>
       </Stack>
