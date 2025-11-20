@@ -1026,14 +1026,27 @@ export default function RecipesPage() {
               </Group>
 
               <Group grow>
-                <Button
-                  variant="light"
-                  color={selectedRecipe.isPublic ? 'orange' : 'blue'}
-                  leftSection={<IconShare size={16} />}
-                  onClick={() => handleShareRecipe(selectedRecipe.id, !selectedRecipe.isPublic)}
-                >
-                  {selectedRecipe.isPublic ? 'Make Private' : 'Make Public'}
-                </Button>
+                {selectedRecipe.source === 'ai' ? (
+                  <Tooltip label="AI-generated recipes cannot be made public. Only user-created recipes can be shared on the public board.">
+                    <Button
+                      variant="light"
+                      color="gray"
+                      leftSection={<IconShare size={16} />}
+                      disabled
+                    >
+                      Cannot Make Public (AI Recipe)
+                    </Button>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    variant="light"
+                    color={selectedRecipe.isPublic ? 'orange' : 'blue'}
+                    leftSection={<IconShare size={16} />}
+                    onClick={() => handleShareRecipe(selectedRecipe.id, !selectedRecipe.isPublic)}
+                  >
+                    {selectedRecipe.isPublic ? 'Make Private' : 'Make Public'}
+                  </Button>
+                )}
                 <Button
                   variant="light"
                   color="red"

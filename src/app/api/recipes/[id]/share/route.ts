@@ -35,6 +35,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // AI-generated recipes cannot be made public - only user-created recipes
+    if (data.makePublic && recipe.source === 'ai') {
+      return NextResponse.json(
+        { error: 'AI-generated recipes cannot be made public. Only user-created recipes can be shared on the public board.' },
+        { status: 400 }
+      );
+    }
+
     // Parse existing shared families
     let sharedWithFamilies: string[] = [];
     if (recipe.sharedWithFamilies) {
