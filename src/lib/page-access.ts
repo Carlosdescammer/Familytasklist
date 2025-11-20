@@ -2,7 +2,7 @@
  * Utility functions for checking page access based on user role and settings
  */
 
-export type PageName = 'calendar' | 'tasks' | 'shopping' | 'family' | 'settings';
+export type PageName = 'calendar' | 'tasks' | 'shopping' | 'family' | 'settings' | 'community';
 
 /**
  * Check if a user has access to a specific page
@@ -40,7 +40,7 @@ export function getAccessiblePages(
   userRole: string | undefined,
   allowedPages: string[] | null | undefined
 ): PageName[] {
-  const allPages: PageName[] = ['calendar', 'tasks', 'shopping', 'family', 'settings'];
+  const allPages: PageName[] = ['calendar', 'tasks', 'shopping', 'family', 'settings', 'community'];
 
   // Parents can access everything
   if (userRole === 'parent') {
@@ -65,6 +65,7 @@ export const PAGE_ROUTES: Record<PageName, string> = {
   shopping: '/shopping',
   family: '/family',
   settings: '/settings',
+  community: '/community',
 };
 
 /**
@@ -76,4 +77,5 @@ export const PAGE_LABELS: Record<PageName, string> = {
   shopping: 'Shopping',
   family: 'Family',
   settings: 'Settings',
+  community: 'Community',
 };
