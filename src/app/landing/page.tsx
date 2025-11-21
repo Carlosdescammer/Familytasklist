@@ -192,12 +192,12 @@ export default function LandingPage() {
                 rightSection={<IconArrowRight size={20} />}
                 style={{ paddingLeft: rem(32), paddingRight: rem(32) }}
               >
-                Start Free Trial
+                Get Started Free
               </Button>
             </Group>
 
             <Text size="sm" c="dimmed" mt="sm">
-              No credit card required. Free for families with up to 5 members.
+              No credit card required. Free for families.
             </Text>
           </Stack>
         </Container>
@@ -419,12 +419,12 @@ export default function LandingPage() {
                 gradient={{ from: 'blue', to: 'cyan' }}
                 rightSection={<IconArrowRight size={20} />}
               >
-                Create Free Account
+                Get Started Free
               </Button>
               <Group gap="xl">
                 <Group gap={6}>
                   <IconCheck size={16} color="var(--mantine-color-green-6)" />
-                  <Text c="dimmed" size="sm">Free forever plan</Text>
+                  <Text c="dimmed" size="sm">Free to use</Text>
                 </Group>
                 <Group gap={6}>
                   <IconCheck size={16} color="var(--mantine-color-green-6)" />
@@ -432,7 +432,7 @@ export default function LandingPage() {
                 </Group>
                 <Group gap={6}>
                   <IconCheck size={16} color="var(--mantine-color-green-6)" />
-                  <Text c="dimmed" size="sm">Cancel anytime</Text>
+                  <Text c="dimmed" size="sm">Setup in minutes</Text>
                 </Group>
               </Group>
             </Stack>
