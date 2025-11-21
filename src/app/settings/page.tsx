@@ -26,12 +26,13 @@ import {
   Divider,
   Code,
 } from '@mantine/core';
-import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent, IconChartBar, IconRobot } from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent, IconChartBar, IconRobot, IconLock, IconLockOpen } from '@tabler/icons-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
 import { generateCalendarToken } from '@/lib/calendar-token';
+import { PAGE_LABELS, PAGE_ROUTES, getAccessiblePages } from '@/lib/page-access';
 
 const COMMON_STORES = [
   'Winn-Dixie',
@@ -429,6 +430,8 @@ export default function SettingsPage() {
     { value: 'shopping', label: 'Shopping Lists' },
     { value: 'family', label: 'Family Profile' },
     { value: 'settings', label: 'Settings' },
+    { value: 'community', label: 'Community Recipes' },
+    { value: 'budget', label: 'Budget Tracker' },
   ];
 
   return (
@@ -652,6 +655,52 @@ export default function SettingsPage() {
             )}
           </Stack>
         </Card>
+
+        {/* Child User - Page Access Display */}
+        {user?.role === 'child' && (
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Stack gap="md">
+              <Group>
+                <IconLockOpen size={24} />
+                <Title order={3}>Your Page Access</Title>
+              </Group>
+
+              <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+                <Text size="sm">
+                  {user.allowedPages && user.allowedPages.length > 0
+                    ? "You have access to the following pages in the app:"
+                    : "You have full access to all pages in the app!"}
+                </Text>
+              </Alert>
+
+              <div>
+                <Text size="sm" fw={500} mb="sm">
+                  Accessible Pages:
+                </Text>
+                <Stack gap="xs">
+                  {getAccessiblePages(user.role, user.allowedPages).map((pageName) => (
+                    <Group key={pageName} gap="xs">
+                      <Badge color="green" variant="light" size="lg">
+                        {PAGE_LABELS[pageName]}
+                      </Badge>
+                      <Text size="xs" c="dimmed">
+                        {PAGE_ROUTES[pageName]}
+                      </Text>
+                    </Group>
+                  ))}
+                </Stack>
+
+                {user.allowedPages && user.allowedPages.length > 0 && (
+                  <Alert icon={<IconLock size={16} />} color="gray" variant="light" mt="md">
+                    <Text size="xs">
+                      If you need access to additional pages, please ask a parent or guardian to update your permissions.
+                    </Text>
+                  </Alert>
+                )}
+              </div>
+            </Stack>
+          </Card>
+        )}
 
         {user?.role === 'parent' && (
           <Card shadow="sm" padding="lg" radius="md" withBorder>
