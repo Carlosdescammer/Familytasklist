@@ -90,7 +90,7 @@ export async function GET() {
         totalCost: parseFloat(overallStats[0]?.totalCost?.toString() || '0'),
         totalTokens: overallStats[0]?.totalTokens || 0,
         successRate: overallStats[0]?.totalCalls > 0
-          ? ((overallStats[0]?.successfulCalls || 0) / overallStats[0].totalCalls * 100).toFixed(1)
+          ? parseFloat(((overallStats[0]?.successfulCalls || 0) / overallStats[0].totalCalls * 100).toFixed(1))
           : 0,
       },
       currentMonth: {
