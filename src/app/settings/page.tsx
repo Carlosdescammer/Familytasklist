@@ -776,7 +776,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Family Board Settings */}
-        {user?.role === 'parent' && (
+        {(user?.role === 'parent' || !user?.role) && (
           <Card shadow="sm" padding="lg" radius="md" withBorder>
             <Stack gap="md">
               <Group>
