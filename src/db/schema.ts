@@ -83,6 +83,7 @@ export const events = pgTable('events', {
   url: text('url'), // Link to virtual event or related website
   color: text('color'), // Color for visual coding
   notes: text('notes'), // Additional notes
+  photoUrl: text('photo_url'), // Photo attached to event
   startTime: timestamp('start_time', { withTimezone: true }).notNull(),
   endTime: timestamp('end_time', { withTimezone: true }).notNull(),
   createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
@@ -311,6 +312,26 @@ export const expenses = pgTable('expenses', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Photos table - Family photo gallery
+export const photos = pgTable('photos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  uploadedBy: uuid('uploaded_by').references(() => users.id, { onDelete: 'set null' }),
+  url: text('url').notNull(), // Uploadthing URL
+  fileName: text('file_name').notNull(),
+  fileSize: integer('file_size'), // Size in bytes
+  caption: text('caption'),
+  description: text('description'),
+  tags: text('tags'), // JSON array of tags
+  eventId: uuid('event_id').references(() => events.id, { onDelete: 'set null' }), // Link to event if applicable
+  recipeId: uuid('recipe_id').references(() => recipes.id, { onDelete: 'set null' }), // Link to recipe if applicable
+  isFavorite: boolean('is_favorite').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
   users: many(users, {
@@ -325,6 +346,7 @@ export const familiesRelations = relations(families, ({ many }) => ({
   shoppingItems: many(shoppingItems),
   tasks: many(tasks),
   recipes: many(recipes),
+  photos: many(photos),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -344,6 +366,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   addedShoppingItems: many(shoppingItems),
   assignedTasks: many(tasks),
   createdRecipes: many(recipes),
+  uploadedPhotos: many(photos),
 }));
 
 export const familyMembersRelations = relations(familyMembers, ({ one }) => ({
@@ -367,6 +390,7 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
     references: [users.id],
   }),
   shoppingLists: many(shoppingLists),
+  photos: many(photos),
 }));
 
 export const shoppingListsRelations = relations(shoppingLists, ({ one, many }) => ({
@@ -423,6 +447,7 @@ export const recipesRelations = relations(recipes, ({ one, many }) => ({
   ratings: many(recipeRatings),
   comments: many(recipeComments),
   categoryAssociations: many(recipeCategoryAssociations),
+  photos: many(photos),
 }));
 
 export const recipeCategoriesRelations = relations(recipeCategories, ({ many }) => ({
@@ -496,6 +521,25 @@ export const expensesRelations = relations(expenses, ({ one }) => ({
   user: one(users, {
     fields: [expenses.userId],
     references: [users.id],
+  }),
+}));
+
+export const photosRelations = relations(photos, ({ one }) => ({
+  family: one(families, {
+    fields: [photos.familyId],
+    references: [families.id],
+  }),
+  uploader: one(users, {
+    fields: [photos.uploadedBy],
+    references: [users.id],
+  }),
+  event: one(events, {
+    fields: [photos.eventId],
+    references: [events.id],
+  }),
+  recipe: one(recipes, {
+    fields: [photos.recipeId],
+    references: [recipes.id],
   }),
 }));
 
@@ -583,3 +627,5 @@ export type Budget = typeof budgets.$inferSelect;
 export type NewBudget = typeof budgets.$inferInsert;
 export type Expense = typeof expenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
+export type Photo = typeof photos.$inferSelect;
+export type NewPhoto = typeof photos.$inferInsert;

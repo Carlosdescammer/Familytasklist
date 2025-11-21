@@ -15,6 +15,7 @@ const updateEventSchema = z.object({
   url: z.string().url().optional().or(z.literal('')),
   color: z.string().optional(),
   notes: z.string().optional(),
+  photoUrl: z.string().optional(),
   startTime: z.string().datetime().optional(),
   endTime: z.string().datetime().optional(),
 });
