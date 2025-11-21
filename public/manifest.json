@@ -1,7 +1,7 @@
 {
-  "name": "FamilyList - Family Productivity App",
+  "name": "FamilyList - Family Organization App",
   "short_name": "FamilyList",
-  "description": "Shared calendar, shopping lists, and tasks for your family",
+  "description": "Organize your family with shared calendars, shopping lists, tasks, recipes, and budgets",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,34 +9,9 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "categories": ["productivity", "lifestyle"],
-  "shortcuts": [
-    {
-      "name": "Calendar",
-      "url": "/calendar",
-      "description": "View family calendar"
-    },
-    {
-      "name": "Shopping List",
-      "url": "/shopping",
-      "description": "View shopping list"
-    },
-    {
-      "name": "Tasks",
-      "url": "/tasks",
-      "description": "View tasks"
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
     }
   ]
 }
