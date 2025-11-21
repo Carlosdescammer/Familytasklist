@@ -15,6 +15,10 @@ export const families = pgTable('families', {
   preferredStores: text('preferred_stores'), // JSON array of store names
   location: text('location'), // City/region for price estimates
   shoppingPreferences: text('shopping_preferences'), // JSON for AI preferences
+  // Family Board settings
+  boardEnabled: boolean('board_enabled').default(false).notNull(),
+  boardWidgets: text('board_widgets'), // JSON array of widget names to display
+  boardToken: text('board_token'), // Token for public board URL
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

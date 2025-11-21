@@ -26,7 +26,7 @@ import {
   Divider,
   Code,
 } from '@mantine/core';
-import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent, IconChartBar, IconRobot, IconLock, IconLockOpen, IconBell } from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent, IconChartBar, IconRobot, IconLock, IconLockOpen, IconBell, IconDeviceTv, IconRefresh, IconExternalLink } from '@tabler/icons-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
@@ -91,6 +91,11 @@ export default function SettingsPage() {
   const [loadingPreferences, setLoadingPreferences] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
 
+  // Family Board state
+  const [boardEnabled, setBoardEnabled] = useState(false);
+  const [boardWidgets, setBoardWidgets] = useState<string[]>(['events', 'tasks', 'shopping']);
+  const [savingBoard, setSavingBoard] = useState(false);
+
   useEffect(() => {
     fetchFamily();
     fetchAiUsageStats();
@@ -109,6 +114,9 @@ export default function SettingsPage() {
         setPreferredStores(data.preferredStores || []);
         setLocation(data.location || '');
         // Don't populate API key - it's masked on the server
+        // Populate Board settings
+        setBoardEnabled(data.boardEnabled || false);
+        setBoardWidgets(data.boardWidgets || ['events', 'tasks', 'shopping']);
       }
     } catch (error) {
       console.error('Error fetching family:', error);
@@ -278,6 +286,61 @@ export default function SettingsPage() {
       message: 'Calendar subscription URL copied to clipboard',
       color: 'green',
     });
+  };
+
+  // Board widget options
+  const BOARD_WIDGETS = [
+    { value: 'events', label: 'Upcoming Events', description: 'Show calendar events' },
+    { value: 'tasks', label: 'Active Tasks', description: 'Show pending tasks' },
+    { value: 'shopping', label: 'Shopping List', description: 'Show items to buy' },
+    { value: 'budget', label: 'Budget Overview', description: 'Show monthly budget' },
+    { value: 'clock', label: 'Clock & Date', description: 'Show current time' },
+  ];
+
+  const getBoardUrl = () => {
+    if (!user?.familyId || !family?.boardToken) return '';
+    let baseUrl = '';
+    if (typeof window !== 'undefined') {
+      baseUrl = window.location.origin;
+      if (!baseUrl.includes('localhost') && baseUrl.startsWith('http://')) {
+        baseUrl = baseUrl.replace('http://', 'https://');
+      }
+    }
+    return `${baseUrl}/board/${user.familyId}/${family.boardToken}`;
+  };
+
+  const handleSaveBoardSettings = async () => {
+    setSavingBoard(true);
+    try {
+      const res = await fetch('/api/families', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boardEnabled,
+          boardWidgets,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to save board settings');
+      }
+
+      notifications.show({
+        title: 'Success',
+        message: 'Family Board settings saved',
+        color: 'green',
+      });
+
+      fetchFamily();
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to save board settings',
+        color: 'red',
+      });
+    } finally {
+      setSavingBoard(false);
+    }
   };
 
   const handleSaveAiSettings = async () => {
@@ -711,6 +774,111 @@ export default function SettingsPage() {
             )}
           </Stack>
         </Card>
+
+        {/* Family Board Settings */}
+        {user?.role === 'parent' && (
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Stack gap="md">
+              <Group>
+                <IconDeviceTv size={24} />
+                <Title order={3}>Family Board</Title>
+              </Group>
+
+              <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+                <Text size="sm">
+                  Create a shareable display board for your family. Perfect for a tablet on the kitchen wall
+                  or a TV display. The board auto-refreshes every 30 seconds.
+                </Text>
+              </Alert>
+
+              <Switch
+                label="Enable Family Board"
+                description="Create a public URL to display your family board"
+                checked={boardEnabled}
+                onChange={(e) => setBoardEnabled(e.currentTarget.checked)}
+                size="md"
+              />
+
+              {boardEnabled && (
+                <>
+                  <div>
+                    <Text size="sm" fw={500} mb="xs">
+                      Select Widgets to Display
+                    </Text>
+                    <Stack gap="xs">
+                      {BOARD_WIDGETS.map((widget) => (
+                        <Checkbox
+                          key={widget.value}
+                          label={widget.label}
+                          description={widget.description}
+                          checked={boardWidgets.includes(widget.value)}
+                          onChange={(e) => {
+                            if (e.currentTarget.checked) {
+                              setBoardWidgets([...boardWidgets, widget.value]);
+                            } else {
+                              setBoardWidgets(boardWidgets.filter((w) => w !== widget.value));
+                            }
+                          }}
+                        />
+                      ))}
+                    </Stack>
+                  </div>
+
+                  {family?.boardToken && (
+                    <>
+                      <Divider />
+                      <div>
+                        <Text size="sm" fw={500} mb="xs">
+                          Your Family Board URL
+                        </Text>
+                        <Group gap="xs" align="flex-start">
+                          <Code style={{ flex: 1, wordBreak: 'break-all', padding: '8px', fontSize: '11px' }}>
+                            {getBoardUrl()}
+                          </Code>
+                          <CopyButton value={getBoardUrl()} timeout={2000}>
+                            {({ copied, copy }) => (
+                              <Tooltip label={copied ? 'Copied!' : 'Copy URL'} withArrow position="right">
+                                <ActionIcon
+                                  color={copied ? 'teal' : 'blue'}
+                                  variant="light"
+                                  onClick={copy}
+                                >
+                                  {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </CopyButton>
+                          <Tooltip label="Open Board" withArrow position="right">
+                            <ActionIcon
+                              color="blue"
+                              variant="light"
+                              onClick={() => window.open(getBoardUrl(), '_blank')}
+                            >
+                              <IconExternalLink size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        </Group>
+                        <Text size="xs" c="dimmed" mt="xs">
+                          Share this URL or bookmark it on your display device
+                        </Text>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              <Group justify="flex-end">
+                <Button
+                  onClick={handleSaveBoardSettings}
+                  loading={savingBoard}
+                  leftSection={<IconDeviceTv size={16} />}
+                >
+                  Save Board Settings
+                </Button>
+              </Group>
+            </Stack>
+          </Card>
+        )}
 
         {/* Child User - Page Access Display */}
         {user?.role === 'child' && (

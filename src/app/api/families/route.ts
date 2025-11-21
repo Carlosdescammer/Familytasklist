@@ -85,6 +85,9 @@ export async function GET() {
       preferredStores: family.preferredStores
         ? JSON.parse(family.preferredStores)
         : [],
+      boardWidgets: family.boardWidgets
+        ? JSON.parse(family.boardWidgets)
+        : ['events', 'tasks', 'shopping'],
     };
 
     return NextResponse.json(response);
@@ -103,7 +106,19 @@ const updateFamilySchema = z.object({
   aiEnabled: z.boolean().optional(),
   preferredStores: z.array(z.string()).optional(),
   location: z.string().optional(),
+  // Family Board settings
+  boardEnabled: z.boolean().optional(),
+  boardWidgets: z.array(z.string()).optional(),
 });
+
+function generateBoardToken(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let token = '';
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -120,6 +135,11 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const data = updateFamilySchema.parse(body);
 
+    // Get current family to check for board token
+    const currentFamily = await db.query.families.findFirst({
+      where: eq(families.id, session.user.familyId),
+    });
+
     // Prepare the update data
     const updateData: any = {
       description: data.description,
@@ -128,6 +148,18 @@ export async function PATCH(req: NextRequest) {
       aiEnabled: data.aiEnabled,
       aiProvider: data.aiProvider,
     };
+
+    // Handle board settings
+    if (data.boardEnabled !== undefined) {
+      updateData.boardEnabled = data.boardEnabled;
+      // Generate a board token if enabling for the first time
+      if (data.boardEnabled && !currentFamily?.boardToken) {
+        updateData.boardToken = generateBoardToken();
+      }
+    }
+    if (data.boardWidgets !== undefined) {
+      updateData.boardWidgets = JSON.stringify(data.boardWidgets);
+    }
 
     // Handle preferred stores - convert array to JSON string
     if (data.preferredStores !== undefined) {
@@ -174,6 +206,9 @@ export async function PATCH(req: NextRequest) {
       preferredStores: updatedFamily.preferredStores
         ? JSON.parse(updatedFamily.preferredStores)
         : [],
+      boardWidgets: updatedFamily.boardWidgets
+        ? JSON.parse(updatedFamily.boardWidgets)
+        : ['events', 'tasks', 'shopping'],
     };
 
     return NextResponse.json(response);
