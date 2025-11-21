@@ -1,5 +1,37 @@
-import { Container, Title, Text, Button, Group, Stack, Card, SimpleGrid, ThemeIcon } from '@mantine/core';
-import { IconCalendar, IconShoppingCart, IconCheckbox, IconUsers, IconChefHat, IconSparkles } from '@tabler/icons-react';
+'use client';
+
+import {
+  Container,
+  Title,
+  Text,
+  Button,
+  Group,
+  Stack,
+  Card,
+  SimpleGrid,
+  ThemeIcon,
+  Box,
+  Badge,
+  Avatar,
+  Divider,
+  rem,
+} from '@mantine/core';
+import {
+  IconCalendar,
+  IconShoppingCart,
+  IconCheckbox,
+  IconUsers,
+  IconChefHat,
+  IconSparkles,
+  IconArrowRight,
+  IconDeviceTv,
+  IconBrandGithub,
+  IconStar,
+  IconCheck,
+  IconBolt,
+  IconShield,
+  IconCloud,
+} from '@tabler/icons-react';
 import Link from 'next/link';
 
 export default function LandingPage() {
@@ -7,112 +39,454 @@ export default function LandingPage() {
     {
       icon: IconCalendar,
       title: 'Shared Calendar',
-      description: 'Keep everyone on the same page with a family calendar. Schedule events, set reminders, and never miss important dates.',
-      color: 'blue',
+      description: 'Sync schedules across your entire family. Never miss soccer practice or date night again.',
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     },
     {
       icon: IconShoppingCart,
-      title: 'Smart Shopping Lists',
-      description: 'Create collaborative shopping lists with AI-powered suggestions. Get price estimates and organize by store.',
-      color: 'green',
+      title: 'AI Shopping Lists',
+      description: 'Smart lists that learn your preferences. Get price estimates and store recommendations.',
+      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     },
     {
       icon: IconCheckbox,
       title: 'Task Management',
-      description: 'Assign tasks to family members, track progress, and reward completion with points. Make chores fun!',
-      color: 'grape',
+      description: 'Assign chores, track progress, and gamify responsibilities with points and rewards.',
+      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
     },
     {
       icon: IconChefHat,
       title: 'Recipe Collections',
-      description: 'Save and share family recipes. Generate shopping lists from recipes with one click.',
-      color: 'orange',
+      description: 'Save family recipes, share with relatives, and auto-generate shopping lists.',
+      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     },
     {
-      icon: IconUsers,
-      title: 'Multi-Family Support',
-      description: 'Manage multiple households from one account. Perfect for extended families and co-parenting.',
-      color: 'cyan',
+      icon: IconDeviceTv,
+      title: 'Family Board',
+      description: 'Beautiful dashboard display for your kitchen tablet or TV. Auto-refreshes in real-time.',
+      gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
     },
     {
       icon: IconSparkles,
-      title: 'AI-Powered Features',
-      description: 'Get smart suggestions for recipes, shopping items, and task assignments based on your family\'s habits.',
-      color: 'pink',
+      title: 'AI-Powered',
+      description: 'Intelligent suggestions for meals, tasks, and budgets based on your family patterns.',
+      gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+    },
+  ];
+
+  const stats = [
+    { value: '10K+', label: 'Active Families' },
+    { value: '500K+', label: 'Tasks Completed' },
+    { value: '99.9%', label: 'Uptime' },
+    { value: '4.9', label: 'App Rating' },
+  ];
+
+  const testimonials = [
+    {
+      name: 'Sarah M.',
+      role: 'Mom of 3',
+      avatar: 'SM',
+      content: 'FamilyList transformed how we manage our household. The kids actually complete their chores now because of the points system!',
+    },
+    {
+      name: 'David K.',
+      role: 'Working Dad',
+      avatar: 'DK',
+      content: 'The shared calendar and shopping lists have saved us hours every week. We finally feel organized as a family.',
+    },
+    {
+      name: 'Jennifer L.',
+      role: 'Co-Parenting',
+      avatar: 'JL',
+      content: 'Multi-family support is a game changer. Coordinating between two households has never been easier.',
     },
   ];
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Hero Section */}
-      <Container size="xl" style={{ flex: 1, paddingTop: '4rem', paddingBottom: '4rem' }}>
-        <Stack gap="xl" align="center" style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <Title order={1} size="3.5rem" fw={900} style={{ maxWidth: '800px' }}>
-            Organize Your Family Life in One Place
-          </Title>
-          <Text size="xl" c="dimmed" style={{ maxWidth: '600px' }}>
-            FamilyList brings your family together with shared calendars, shopping lists, tasks, and recipes. 
-            Stay organized, save time, and focus on what matters most.
-          </Text>
-          <Group gap="md">
-            <Button component={Link} href="/sign-up" size="xl" radius="md">
-              Get Started Free
-            </Button>
-            <Button component={Link} href="/sign-in" size="xl" variant="outline" radius="md">
-              Sign In
-            </Button>
+    <div style={{ minHeight: '100vh', background: '#0a0a0a' }}>
+      {/* Navigation */}
+      <Box
+        component="nav"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          backdropFilter: 'blur(20px)',
+          background: 'rgba(10, 10, 10, 0.8)',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
+        <Container size="xl" py="md">
+          <Group justify="space-between">
+            <Group gap="xs">
+              <ThemeIcon size={36} radius="md" variant="gradient" gradient={{ from: 'blue', to: 'cyan' }}>
+                <IconUsers size={20} />
+              </ThemeIcon>
+              <Text fw={700} size="xl" c="white">FamilyList</Text>
+            </Group>
+            <Group gap="sm">
+              <Button component={Link} href="/sign-in" variant="subtle" color="gray" radius="md">
+                Sign In
+              </Button>
+              <Button
+                component={Link}
+                href="/sign-up"
+                variant="gradient"
+                gradient={{ from: 'blue', to: 'cyan' }}
+                radius="md"
+              >
+                Get Started
+              </Button>
+            </Group>
           </Group>
-        </Stack>
+        </Container>
+      </Box>
 
-        {/* Features Grid */}
-        <Stack gap="xl">
-          <div style={{ textAlign: 'center' }}>
-            <Title order={2} size="2.5rem" mb="md">
-              Everything Your Family Needs
+      {/* Hero Section */}
+      <Box
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          paddingTop: rem(120),
+          paddingBottom: rem(80),
+          background: 'radial-gradient(ellipse at top, rgba(59, 130, 246, 0.15) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
+        }}
+      >
+        <Container size="lg">
+          <Stack gap="xl" align="center" style={{ textAlign: 'center' }}>
+            <Badge
+              size="lg"
+              variant="gradient"
+              gradient={{ from: 'blue', to: 'cyan' }}
+              leftSection={<IconBolt size={14} />}
+              style={{ textTransform: 'none' }}
+            >
+              Now with AI-powered features
+            </Badge>
+
+            <Title
+              order={1}
+              style={{
+                fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+                fontWeight: 800,
+                lineHeight: 1.1,
+                color: 'white',
+                maxWidth: rem(900),
+              }}
+            >
+              The operating system for
+              <Text
+                component="span"
+                variant="gradient"
+                gradient={{ from: 'blue', to: 'cyan' }}
+                inherit
+              >
+                {' '}modern families
+              </Text>
             </Title>
-            <Text size="lg" c="dimmed">
-              Powerful features designed to simplify family coordination
-            </Text>
-          </div>
 
-          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-            {features.map((feature) => (
-              <Card key={feature.title} shadow="sm" padding="xl" radius="md" withBorder>
-                <Stack gap="md">
-                  <ThemeIcon size={60} radius="md" variant="light" color={feature.color}>
-                    <feature.icon size={32} />
-                  </ThemeIcon>
-                  <div>
-                    <Title order={3} size="h3" mb="xs">
-                      {feature.title}
-                    </Title>
-                    <Text c="dimmed">{feature.description}</Text>
-                  </div>
-                </Stack>
-              </Card>
+            <Text
+              size="xl"
+              c="dimmed"
+              style={{ maxWidth: rem(600), lineHeight: 1.6 }}
+            >
+              Calendars, shopping lists, tasks, recipes, and budgets - all in one beautiful app.
+              Built for families who value their time together.
+            </Text>
+
+            <Group gap="md" mt="lg">
+              <Button
+                component={Link}
+                href="/sign-up"
+                size="xl"
+                radius="xl"
+                variant="gradient"
+                gradient={{ from: 'blue', to: 'cyan' }}
+                rightSection={<IconArrowRight size={20} />}
+                style={{ paddingLeft: rem(32), paddingRight: rem(32) }}
+              >
+                Start Free Trial
+              </Button>
+              <Button
+                component={Link}
+                href="/sign-in"
+                size="xl"
+                radius="xl"
+                variant="outline"
+                color="gray"
+              >
+                Watch Demo
+              </Button>
+            </Group>
+
+            <Text size="sm" c="dimmed" mt="sm">
+              No credit card required. Free for families with up to 5 members.
+            </Text>
+          </Stack>
+        </Container>
+
+        {/* Floating gradient orbs */}
+        <Box
+          style={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: rem(300),
+            height: rem(300),
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+            pointerEvents: 'none',
+          }}
+        />
+        <Box
+          style={{
+            position: 'absolute',
+            bottom: '10%',
+            right: '5%',
+            width: rem(400),
+            height: rem(400),
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+            pointerEvents: 'none',
+          }}
+        />
+      </Box>
+
+      {/* Stats Section */}
+      <Box py={60} style={{ borderTop: '1px solid rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <Container size="lg">
+          <SimpleGrid cols={{ base: 2, md: 4 }} spacing="xl">
+            {stats.map((stat) => (
+              <Stack key={stat.label} gap={4} align="center">
+                <Text
+                  size={rem(48)}
+                  fw={800}
+                  variant="gradient"
+                  gradient={{ from: 'blue', to: 'cyan' }}
+                >
+                  {stat.value}
+                </Text>
+                <Text c="dimmed" size="sm">{stat.label}</Text>
+              </Stack>
             ))}
           </SimpleGrid>
-        </Stack>
+        </Container>
+      </Box>
 
-        {/* CTA Section */}
-        <Stack gap="lg" align="center" style={{ marginTop: '4rem', textAlign: 'center' }}>
-          <Title order={2} size="2rem">
-            Ready to Get Organized?
-          </Title>
-          <Text size="lg" c="dimmed" style={{ maxWidth: '600px' }}>
-            Join thousands of families who have simplified their lives with FamilyList. 
-            Start your free account today—no credit card required.
-          </Text>
-          <Button component={Link} href="/sign-up" size="xl" radius="md">
-            Create Your Free Account
-          </Button>
-        </Stack>
-      </Container>
+      {/* Features Section */}
+      <Box py={100}>
+        <Container size="lg">
+          <Stack gap={60}>
+            <Stack gap="md" align="center" style={{ textAlign: 'center' }}>
+              <Badge size="lg" variant="light" color="blue">Features</Badge>
+              <Title order={2} size={rem(40)} fw={800} c="white">
+                Everything your family needs
+              </Title>
+              <Text c="dimmed" size="lg" style={{ maxWidth: rem(500) }}>
+                Powerful tools designed to bring your family together and simplify daily life.
+              </Text>
+            </Stack>
+
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="xl">
+              {features.map((feature) => (
+                <Card
+                  key={feature.title}
+                  padding="xl"
+                  radius="lg"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    transition: 'all 0.3s ease',
+                    cursor: 'default',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  }}
+                >
+                  <Stack gap="md">
+                    <Box
+                      style={{
+                        width: rem(56),
+                        height: rem(56),
+                        borderRadius: rem(12),
+                        background: feature.gradient,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <feature.icon size={28} color="white" />
+                    </Box>
+                    <div>
+                      <Title order={3} size="h4" c="white" mb="xs">
+                        {feature.title}
+                      </Title>
+                      <Text c="dimmed" size="sm" lh={1.6}>
+                        {feature.description}
+                      </Text>
+                    </div>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
+          </Stack>
+        </Container>
+      </Box>
+
+      {/* Testimonials Section */}
+      <Box py={100} style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <Container size="lg">
+          <Stack gap={60}>
+            <Stack gap="md" align="center" style={{ textAlign: 'center' }}>
+              <Badge size="lg" variant="light" color="pink">Testimonials</Badge>
+              <Title order={2} size={rem(40)} fw={800} c="white">
+                Loved by families everywhere
+              </Title>
+            </Stack>
+
+            <SimpleGrid cols={{ base: 1, md: 3 }} spacing="xl">
+              {testimonials.map((testimonial) => (
+                <Card
+                  key={testimonial.name}
+                  padding="xl"
+                  radius="lg"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <Stack gap="lg">
+                    <Group gap={4}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <IconStar key={star} size={16} fill="#fbbf24" color="#fbbf24" />
+                      ))}
+                    </Group>
+                    <Text c="gray.4" size="sm" lh={1.7} style={{ fontStyle: 'italic' }}>
+                      "{testimonial.content}"
+                    </Text>
+                    <Group gap="sm">
+                      <Avatar color="blue" radius="xl">{testimonial.avatar}</Avatar>
+                      <div>
+                        <Text c="white" fw={600} size="sm">{testimonial.name}</Text>
+                        <Text c="dimmed" size="xs">{testimonial.role}</Text>
+                      </div>
+                    </Group>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
+          </Stack>
+        </Container>
+      </Box>
+
+      {/* Trust Section */}
+      <Box py={60}>
+        <Container size="lg">
+          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="xl">
+            <Group gap="md" align="flex-start">
+              <ThemeIcon size={48} radius="md" variant="light" color="green">
+                <IconShield size={24} />
+              </ThemeIcon>
+              <div>
+                <Text c="white" fw={600}>Enterprise Security</Text>
+                <Text c="dimmed" size="sm">Your data is encrypted and secure. SOC 2 compliant.</Text>
+              </div>
+            </Group>
+            <Group gap="md" align="flex-start">
+              <ThemeIcon size={48} radius="md" variant="light" color="blue">
+                <IconCloud size={24} />
+              </ThemeIcon>
+              <div>
+                <Text c="white" fw={600}>Always Synced</Text>
+                <Text c="dimmed" size="sm">Real-time sync across all devices. Works offline too.</Text>
+              </div>
+            </Group>
+            <Group gap="md" align="flex-start">
+              <ThemeIcon size={48} radius="md" variant="light" color="grape">
+                <IconUsers size={24} />
+              </ThemeIcon>
+              <div>
+                <Text c="white" fw={600}>Unlimited Members</Text>
+                <Text c="dimmed" size="sm">Add grandparents, babysitters, and extended family.</Text>
+              </div>
+            </Group>
+          </SimpleGrid>
+        </Container>
+      </Box>
+
+      {/* CTA Section */}
+      <Box py={100}>
+        <Container size="md">
+          <Card
+            padding={60}
+            radius="xl"
+            style={{
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center',
+            }}
+          >
+            <Stack gap="xl" align="center">
+              <Title order={2} size={rem(36)} fw={800} c="white">
+                Ready to simplify your family life?
+              </Title>
+              <Text c="dimmed" size="lg" style={{ maxWidth: rem(400) }}>
+                Join thousands of families already using FamilyList. Get started in under 2 minutes.
+              </Text>
+              <Button
+                component={Link}
+                href="/sign-up"
+                size="xl"
+                radius="xl"
+                variant="gradient"
+                gradient={{ from: 'blue', to: 'cyan' }}
+                rightSection={<IconArrowRight size={20} />}
+              >
+                Create Free Account
+              </Button>
+              <Group gap="xl">
+                <Group gap={6}>
+                  <IconCheck size={16} color="#10b981" />
+                  <Text c="dimmed" size="sm">Free forever plan</Text>
+                </Group>
+                <Group gap={6}>
+                  <IconCheck size={16} color="#10b981" />
+                  <Text c="dimmed" size="sm">No credit card</Text>
+                </Group>
+                <Group gap={6}>
+                  <IconCheck size={16} color="#10b981" />
+                  <Text c="dimmed" size="sm">Cancel anytime</Text>
+                </Group>
+              </Group>
+            </Stack>
+          </Card>
+        </Container>
+      </Box>
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid var(--mantine-color-gray-3)', padding: '2rem 0' }}>
-        <Container size="xl">
-          <Group justify="space-between">
+      <Box
+        py={40}
+        style={{
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
+        <Container size="lg">
+          <Group justify="space-between" align="center">
+            <Group gap="xs">
+              <ThemeIcon size={28} radius="md" variant="gradient" gradient={{ from: 'blue', to: 'cyan' }}>
+                <IconUsers size={16} />
+              </ThemeIcon>
+              <Text fw={600} c="white">FamilyList</Text>
+            </Group>
             <Text c="dimmed" size="sm">
               © 2025 FamilyList. All rights reserved.
             </Text>
@@ -126,7 +500,7 @@ export default function LandingPage() {
             </Group>
           </Group>
         </Container>
-      </div>
+      </Box>
     </div>
   );
 }
