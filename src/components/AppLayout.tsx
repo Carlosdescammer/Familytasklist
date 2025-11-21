@@ -19,6 +19,8 @@ import {
   Badge,
   Divider,
   Button,
+  Select,
+  SegmentedControl,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -77,6 +79,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [notificationFilter, setNotificationFilter] = useState<string>('all');
+  const [notificationReadFilter, setNotificationReadFilter] = useState<string>('all');
 
   useEffect(() => {
     setMounted(true);
@@ -125,6 +129,31 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Filter notifications based on selected filters
+  const filteredNotifications = notifications.filter(notification => {
+    // Filter by type
+    if (notificationFilter !== 'all') {
+      const typeCategory = notificationFilter;
+      const taskTypes = ['task_assigned', 'task_completed', 'all_tasks_complete'];
+      const eventTypes = ['event_created', 'event_reminder'];
+      const shoppingTypes = ['shopping_list_created', 'shopping_list_updated'];
+      const budgetTypes = ['budget_alert', 'budget_limit_reached'];
+      const familyTypes = ['family_member_joined', 'recipe_shared'];
+
+      if (typeCategory === 'tasks' && !taskTypes.includes(notification.type)) return false;
+      if (typeCategory === 'events' && !eventTypes.includes(notification.type)) return false;
+      if (typeCategory === 'shopping' && !shoppingTypes.includes(notification.type)) return false;
+      if (typeCategory === 'budget' && !budgetTypes.includes(notification.type)) return false;
+      if (typeCategory === 'family' && !familyTypes.includes(notification.type)) return false;
+    }
+
+    // Filter by read status
+    if (notificationReadFilter === 'unread' && notification.read) return false;
+    if (notificationReadFilter === 'read' && !notification.read) return false;
+
+    return true;
+  });
 
   return (
     <AppShell
@@ -207,16 +236,48 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     )}
                   </Group>
 
+                  {/* Filters */}
+                  <Group gap="xs">
+                    <Select
+                      placeholder="Filter by type"
+                      size="xs"
+                      value={notificationFilter}
+                      onChange={(value) => setNotificationFilter(value || 'all')}
+                      data={[
+                        { value: 'all', label: 'All Types' },
+                        { value: 'tasks', label: 'Tasks' },
+                        { value: 'events', label: 'Events' },
+                        { value: 'shopping', label: 'Shopping' },
+                        { value: 'budget', label: 'Budget' },
+                        { value: 'family', label: 'Family' },
+                      ]}
+                      style={{ flex: 1 }}
+                      clearable
+                    />
+                    <SegmentedControl
+                      size="xs"
+                      value={notificationReadFilter}
+                      onChange={setNotificationReadFilter}
+                      data={[
+                        { label: 'All', value: 'all' },
+                        { label: 'Unread', value: 'unread' },
+                        { label: 'Read', value: 'read' },
+                      ]}
+                    />
+                  </Group>
+
                   <Divider />
 
-                  {notifications.length === 0 ? (
+                  {filteredNotifications.length === 0 ? (
                     <Text size="sm" c="dimmed" ta="center" py="md">
-                      No notifications yet
+                      {notifications.length === 0
+                        ? 'No notifications yet'
+                        : 'No notifications match your filters'}
                     </Text>
                   ) : (
                     <ScrollArea h={400}>
                       <Stack gap="xs">
-                        {notifications.map((notification) => (
+                        {filteredNotifications.map((notification) => (
                           <div
                             key={notification.id}
                             style={{
