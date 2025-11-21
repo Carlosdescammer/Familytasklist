@@ -71,6 +71,7 @@ export default function PhotosPage() {
   const [detailModalOpened, setDetailModalOpened] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
+  const [familyId, setFamilyId] = useState<string>('');
 
   const [editForm, setEditForm] = useState({
     caption: '',
@@ -78,19 +79,21 @@ export default function PhotosPage() {
     isFavorite: false,
   });
 
+  // Get familyId from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedFamilyId = localStorage.getItem('selectedFamilyId');
+      if (storedFamilyId) {
+        setFamilyId(storedFamilyId);
+      }
+    }
+  }, []);
+
   const fetchPhotos = useCallback(async () => {
+    if (!familyId) return;
+
     setLoading(true);
     try {
-      const familyId = localStorage.getItem('selectedFamilyId');
-      if (!familyId) {
-        notifications.show({
-          title: 'Error',
-          message: 'No family selected',
-          color: 'red',
-        });
-        return;
-      }
-
       const res = await fetch(`/api/photos?familyId=${familyId}`);
       if (!res.ok) throw new Error('Failed to fetch photos');
 
@@ -105,7 +108,7 @@ export default function PhotosPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [familyId]);
 
   useEffect(() => {
     fetchPhotos();
@@ -212,8 +215,6 @@ export default function PhotosPage() {
     if (filter === 'gallery') return !photo.eventId && !photo.recipeId;
     return true;
   });
-
-  const familyId = localStorage.getItem('selectedFamilyId') || '';
 
   return (
     <AppLayout>
