@@ -13,7 +13,6 @@ import {
   Box,
   Badge,
   Avatar,
-  Divider,
   rem,
 } from '@mantine/core';
 import {
@@ -25,10 +24,8 @@ import {
   IconSparkles,
   IconArrowRight,
   IconDeviceTv,
-  IconBrandGithub,
   IconStar,
   IconCheck,
-  IconBolt,
   IconShield,
   IconCloud,
 } from '@tabler/icons-react';
@@ -44,7 +41,7 @@ export default function LandingPage() {
     },
     {
       icon: IconShoppingCart,
-      title: 'AI Shopping Lists',
+      title: 'Smart Shopping Lists',
       description: 'Smart lists that learn your preferences. Get price estimates and store recommendations.',
       gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     },
@@ -68,7 +65,7 @@ export default function LandingPage() {
     },
     {
       icon: IconSparkles,
-      title: 'AI-Powered',
+      title: 'Smart Suggestions',
       description: 'Intelligent suggestions for meals, tasks, and budgets based on your family patterns.',
       gradient: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
     },
@@ -103,7 +100,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a' }}>
+    <Box style={{ minHeight: '100vh' }}>
       {/* Navigation */}
       <Box
         component="nav"
@@ -114,8 +111,8 @@ export default function LandingPage() {
           right: 0,
           zIndex: 100,
           backdropFilter: 'blur(20px)',
-          background: 'rgba(10, 10, 10, 0.8)',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          background: 'var(--mantine-color-body)',
+          borderBottom: '1px solid var(--mantine-color-default-border)',
         }}
       >
         <Container size="xl" py="md">
@@ -124,7 +121,7 @@ export default function LandingPage() {
               <ThemeIcon size={36} radius="md" variant="gradient" gradient={{ from: 'blue', to: 'cyan' }}>
                 <IconUsers size={20} />
               </ThemeIcon>
-              <Text fw={700} size="xl" c="white">FamilyList</Text>
+              <Text fw={700} size="xl">FamilyList</Text>
             </Group>
             <Group gap="sm">
               <Button component={Link} href="/sign-in" variant="subtle" color="gray" radius="md">
@@ -151,28 +148,16 @@ export default function LandingPage() {
           overflow: 'hidden',
           paddingTop: rem(120),
           paddingBottom: rem(80),
-          background: 'radial-gradient(ellipse at top, rgba(59, 130, 246, 0.15) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
         }}
       >
         <Container size="lg">
           <Stack gap="xl" align="center" style={{ textAlign: 'center' }}>
-            <Badge
-              size="lg"
-              variant="gradient"
-              gradient={{ from: 'blue', to: 'cyan' }}
-              leftSection={<IconBolt size={14} />}
-              style={{ textTransform: 'none' }}
-            >
-              Now with AI-powered features
-            </Badge>
-
             <Title
               order={1}
               style={{
                 fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
                 fontWeight: 800,
                 lineHeight: 1.1,
-                color: 'white',
                 maxWidth: rem(900),
               }}
             >
@@ -209,16 +194,6 @@ export default function LandingPage() {
               >
                 Start Free Trial
               </Button>
-              <Button
-                component={Link}
-                href="/sign-in"
-                size="xl"
-                radius="xl"
-                variant="outline"
-                color="gray"
-              >
-                Watch Demo
-              </Button>
             </Group>
 
             <Text size="sm" c="dimmed" mt="sm">
@@ -235,7 +210,7 @@ export default function LandingPage() {
             left: '10%',
             width: rem(300),
             height: rem(300),
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
             filter: 'blur(60px)',
             pointerEvents: 'none',
           }}
@@ -247,7 +222,7 @@ export default function LandingPage() {
             right: '5%',
             width: rem(400),
             height: rem(400),
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
             filter: 'blur(80px)',
             pointerEvents: 'none',
           }}
@@ -255,7 +230,7 @@ export default function LandingPage() {
       </Box>
 
       {/* Stats Section */}
-      <Box py={60} style={{ borderTop: '1px solid rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+      <Box py={60} style={{ borderTop: '1px solid var(--mantine-color-default-border)', borderBottom: '1px solid var(--mantine-color-default-border)' }}>
         <Container size="lg">
           <SimpleGrid cols={{ base: 2, md: 4 }} spacing="xl">
             {stats.map((stat) => (
@@ -281,7 +256,7 @@ export default function LandingPage() {
           <Stack gap={60}>
             <Stack gap="md" align="center" style={{ textAlign: 'center' }}>
               <Badge size="lg" variant="light" color="blue">Features</Badge>
-              <Title order={2} size={rem(40)} fw={800} c="white">
+              <Title order={2} size={rem(40)} fw={800}>
                 Everything your family needs
               </Title>
               <Text c="dimmed" size="lg" style={{ maxWidth: rem(500) }}>
@@ -295,21 +270,18 @@ export default function LandingPage() {
                   key={feature.title}
                   padding="xl"
                   radius="lg"
+                  withBorder
                   style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.1)',
                     transition: 'all 0.3s ease',
                     cursor: 'default',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
                     e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                    e.currentTarget.style.boxShadow = '0 10px 40px rgba(0,0,0,0.15)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.boxShadow = '';
                   }}
                 >
                   <Stack gap="md">
@@ -327,7 +299,7 @@ export default function LandingPage() {
                       <feature.icon size={28} color="white" />
                     </Box>
                     <div>
-                      <Title order={3} size="h4" c="white" mb="xs">
+                      <Title order={3} size="h4" mb="xs">
                         {feature.title}
                       </Title>
                       <Text c="dimmed" size="sm" lh={1.6}>
@@ -343,12 +315,12 @@ export default function LandingPage() {
       </Box>
 
       {/* Testimonials Section */}
-      <Box py={100} style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <Box py={100} bg="var(--mantine-color-gray-light)">
         <Container size="lg">
           <Stack gap={60}>
             <Stack gap="md" align="center" style={{ textAlign: 'center' }}>
               <Badge size="lg" variant="light" color="pink">Testimonials</Badge>
-              <Title order={2} size={rem(40)} fw={800} c="white">
+              <Title order={2} size={rem(40)} fw={800}>
                 Loved by families everywhere
               </Title>
             </Stack>
@@ -359,10 +331,7 @@ export default function LandingPage() {
                   key={testimonial.name}
                   padding="xl"
                   radius="lg"
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                  }}
+                  withBorder
                 >
                   <Stack gap="lg">
                     <Group gap={4}>
@@ -370,13 +339,13 @@ export default function LandingPage() {
                         <IconStar key={star} size={16} fill="#fbbf24" color="#fbbf24" />
                       ))}
                     </Group>
-                    <Text c="gray.4" size="sm" lh={1.7} style={{ fontStyle: 'italic' }}>
+                    <Text c="dimmed" size="sm" lh={1.7} style={{ fontStyle: 'italic' }}>
                       "{testimonial.content}"
                     </Text>
                     <Group gap="sm">
                       <Avatar color="blue" radius="xl">{testimonial.avatar}</Avatar>
                       <div>
-                        <Text c="white" fw={600} size="sm">{testimonial.name}</Text>
+                        <Text fw={600} size="sm">{testimonial.name}</Text>
                         <Text c="dimmed" size="xs">{testimonial.role}</Text>
                       </div>
                     </Group>
@@ -397,7 +366,7 @@ export default function LandingPage() {
                 <IconShield size={24} />
               </ThemeIcon>
               <div>
-                <Text c="white" fw={600}>Enterprise Security</Text>
+                <Text fw={600}>Enterprise Security</Text>
                 <Text c="dimmed" size="sm">Your data is encrypted and secure. SOC 2 compliant.</Text>
               </div>
             </Group>
@@ -406,7 +375,7 @@ export default function LandingPage() {
                 <IconCloud size={24} />
               </ThemeIcon>
               <div>
-                <Text c="white" fw={600}>Always Synced</Text>
+                <Text fw={600}>Always Synced</Text>
                 <Text c="dimmed" size="sm">Real-time sync across all devices. Works offline too.</Text>
               </div>
             </Group>
@@ -415,7 +384,7 @@ export default function LandingPage() {
                 <IconUsers size={24} />
               </ThemeIcon>
               <div>
-                <Text c="white" fw={600}>Unlimited Members</Text>
+                <Text fw={600}>Unlimited Members</Text>
                 <Text c="dimmed" size="sm">Add grandparents, babysitters, and extended family.</Text>
               </div>
             </Group>
@@ -430,13 +399,12 @@ export default function LandingPage() {
             padding={60}
             radius="xl"
             style={{
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'linear-gradient(135deg, var(--mantine-color-blue-light) 0%, var(--mantine-color-grape-light) 100%)',
               textAlign: 'center',
             }}
           >
             <Stack gap="xl" align="center">
-              <Title order={2} size={rem(36)} fw={800} c="white">
+              <Title order={2} size={rem(36)} fw={800}>
                 Ready to simplify your family life?
               </Title>
               <Text c="dimmed" size="lg" style={{ maxWidth: rem(400) }}>
@@ -455,15 +423,15 @@ export default function LandingPage() {
               </Button>
               <Group gap="xl">
                 <Group gap={6}>
-                  <IconCheck size={16} color="#10b981" />
+                  <IconCheck size={16} color="var(--mantine-color-green-6)" />
                   <Text c="dimmed" size="sm">Free forever plan</Text>
                 </Group>
                 <Group gap={6}>
-                  <IconCheck size={16} color="#10b981" />
+                  <IconCheck size={16} color="var(--mantine-color-green-6)" />
                   <Text c="dimmed" size="sm">No credit card</Text>
                 </Group>
                 <Group gap={6}>
-                  <IconCheck size={16} color="#10b981" />
+                  <IconCheck size={16} color="var(--mantine-color-green-6)" />
                   <Text c="dimmed" size="sm">Cancel anytime</Text>
                 </Group>
               </Group>
@@ -476,7 +444,7 @@ export default function LandingPage() {
       <Box
         py={40}
         style={{
-          borderTop: '1px solid rgba(255,255,255,0.1)',
+          borderTop: '1px solid var(--mantine-color-default-border)',
         }}
       >
         <Container size="lg">
@@ -485,7 +453,7 @@ export default function LandingPage() {
               <ThemeIcon size={28} radius="md" variant="gradient" gradient={{ from: 'blue', to: 'cyan' }}>
                 <IconUsers size={16} />
               </ThemeIcon>
-              <Text fw={600} c="white">FamilyList</Text>
+              <Text fw={600}>FamilyList</Text>
             </Group>
             <Text c="dimmed" size="sm">
               © 2025 FamilyList. All rights reserved.
@@ -501,6 +469,6 @@ export default function LandingPage() {
           </Group>
         </Container>
       </Box>
-    </div>
+    </Box>
   );
 }
