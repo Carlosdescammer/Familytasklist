@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { photos, familyMembers } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';

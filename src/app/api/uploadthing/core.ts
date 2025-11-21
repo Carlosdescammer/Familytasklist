@@ -1,6 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/db";
+import { db } from "@/lib/db";
 import { photos } from "@/db/schema";
 
 const f = createUploadthing();
