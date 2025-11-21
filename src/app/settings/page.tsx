@@ -967,6 +967,38 @@ export default function SettingsPage() {
                       </div>
                     </>
                   )}
+
+                  {/* Monthly History */}
+                  {aiUsageStats.monthlyHistory && aiUsageStats.monthlyHistory.length > 0 && (
+                    <>
+                      <Divider />
+                      <div>
+                        <Text size="sm" fw={500} mb="xs">Usage History (Last 6 Months)</Text>
+                        <Stack gap="xs">
+                          {aiUsageStats.monthlyHistory.map((month: any) => {
+                            const monthDate = new Date(month.month + '-01');
+                            const monthName = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                            return (
+                              <Group key={month.month} justify="space-between" p="xs" style={{ borderRadius: '4px', backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                                <Text size="sm" fw={500}>{monthName}</Text>
+                                <Group gap="md">
+                                  <Text size="xs" c="dimmed">{month.totalCalls} calls</Text>
+                                  <Text size="xs" c="dimmed">{month.totalTokens.toLocaleString()} tokens</Text>
+                                  <Text size="sm" fw={600} c="blue">${month.totalCost.toFixed(4)}</Text>
+                                </Group>
+                              </Group>
+                            );
+                          })}
+                        </Stack>
+                        {aiUsageStats.monthlyHistory.length > 0 && (
+                          <Text size="xs" c="dimmed" mt="xs">
+                            Total tracked: {aiUsageStats.monthlyHistory.reduce((sum: number, m: any) => sum + m.totalCalls, 0)} API calls,
+                            ${aiUsageStats.monthlyHistory.reduce((sum: number, m: any) => sum + m.totalCost, 0).toFixed(4)} spent
+                          </Text>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </>
               ) : (
                 <Text size="sm" c="dimmed" ta="center" py="md">

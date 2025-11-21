@@ -2,17 +2,22 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { aiUsageLogs } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
-import { eq, and, gte, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/ai-usage - Get AI usage statistics for the current family
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.familyId || !session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Parse query parameters for date range
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
     // Get the start of current month
     const startOfMonth = new Date();
@@ -84,6 +89,46 @@ export async function GET() {
       },
     });
 
+    // Get monthly breakdown for the last 6 months
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyBreakdown = await db
+      .select({
+        month: sql<string>`TO_CHAR(${aiUsageLogs.createdAt}, 'YYYY-MM')`,
+        totalCalls: sql<number>`COUNT(*)::int`,
+        totalCost: sql<number>`COALESCE(SUM(${aiUsageLogs.cost}), 0)::numeric(10,6)`,
+        totalTokens: sql<number>`COALESCE(SUM(${aiUsageLogs.tokensUsed}), 0)::int`,
+      })
+      .from(aiUsageLogs)
+      .where(
+        and(
+          eq(aiUsageLogs.familyId, session.user.familyId),
+          gte(aiUsageLogs.createdAt, sixMonthsAgo)
+        )
+      )
+      .groupBy(sql`TO_CHAR(${aiUsageLogs.createdAt}, 'YYYY-MM')`)
+      .orderBy(sql`TO_CHAR(${aiUsageLogs.createdAt}, 'YYYY-MM') ASC`);
+
+    // Get daily breakdown for current month (for chart)
+    const dailyBreakdown = await db
+      .select({
+        date: sql<string>`TO_CHAR(${aiUsageLogs.createdAt}, 'YYYY-MM-DD')`,
+        totalCalls: sql<number>`COUNT(*)::int`,
+        totalCost: sql<number>`COALESCE(SUM(${aiUsageLogs.cost}), 0)::numeric(10,6)`,
+      })
+      .from(aiUsageLogs)
+      .where(
+        and(
+          eq(aiUsageLogs.familyId, session.user.familyId),
+          gte(aiUsageLogs.createdAt, startOfMonth)
+        )
+      )
+      .groupBy(sql`TO_CHAR(${aiUsageLogs.createdAt}, 'YYYY-MM-DD')`)
+      .orderBy(sql`TO_CHAR(${aiUsageLogs.createdAt}, 'YYYY-MM-DD') ASC`);
+
     return NextResponse.json({
       overall: {
         totalCalls: overallStats[0]?.totalCalls || 0,
@@ -107,6 +152,17 @@ export async function GET() {
         provider: p.provider,
         count: p.count,
         totalCost: parseFloat(p.totalCost?.toString() || '0'),
+      })),
+      monthlyHistory: monthlyBreakdown.map(m => ({
+        month: m.month,
+        totalCalls: m.totalCalls,
+        totalCost: parseFloat(m.totalCost?.toString() || '0'),
+        totalTokens: m.totalTokens,
+      })),
+      dailyHistory: dailyBreakdown.map(d => ({
+        date: d.date,
+        totalCalls: d.totalCalls,
+        totalCost: parseFloat(d.totalCost?.toString() || '0'),
       })),
       recentLogs,
     });
