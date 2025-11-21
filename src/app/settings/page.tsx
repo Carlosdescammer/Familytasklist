@@ -26,7 +26,7 @@ import {
   Divider,
   Code,
 } from '@mantine/core';
-import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent, IconChartBar, IconRobot, IconLock, IconLockOpen } from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconInfoCircle, IconSparkles, IconSettings, IconCoins, IconTrophy, IconCalendarEvent, IconChartBar, IconRobot, IconLock, IconLockOpen, IconBell } from '@tabler/icons-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
@@ -85,9 +85,16 @@ export default function SettingsPage() {
   const [aiUsageStats, setAiUsageStats] = useState<any>(null);
   const [loadingAiStats, setLoadingAiStats] = useState(false);
 
+  // Notification preferences state
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [notificationPreferences, setNotificationPreferences] = useState<Record<string, boolean>>({});
+  const [loadingPreferences, setLoadingPreferences] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
+
   useEffect(() => {
     fetchFamily();
     fetchAiUsageStats();
+    fetchNotificationPreferences();
   }, []);
 
   const fetchFamily = async () => {
@@ -120,6 +127,55 @@ export default function SettingsPage() {
       console.error('Error fetching AI usage stats:', error);
     } finally {
       setLoadingAiStats(false);
+    }
+  };
+
+  const fetchNotificationPreferences = async () => {
+    try {
+      setLoadingPreferences(true);
+      const res = await fetch('/api/users/preferences');
+      if (res.ok) {
+        const data = await res.json();
+        setEmailNotifications(data.emailNotifications ?? true);
+        setNotificationPreferences(data.notificationPreferences || {});
+      }
+    } catch (error) {
+      console.error('Error fetching notification preferences:', error);
+    } finally {
+      setLoadingPreferences(false);
+    }
+  };
+
+  const handleSaveNotificationPreferences = async () => {
+    try {
+      setSavingPreferences(true);
+      const res = await fetch('/api/users/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailNotifications,
+          notificationPreferences,
+        }),
+      });
+
+      if (res.ok) {
+        notifications.show({
+          title: 'Success',
+          message: 'Notification preferences saved successfully',
+          color: 'green',
+        });
+      } else {
+        throw new Error('Failed to save preferences');
+      }
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to save notification preferences',
+        color: 'red',
+      });
+    } finally {
+      setSavingPreferences(false);
     }
   };
 
@@ -1008,6 +1064,132 @@ export default function SettingsPage() {
             </Stack>
           </Card>
         )}
+
+        {/* Notification Preferences */}
+        <Card shadow="sm" padding="lg" radius="md" withBorder>
+          <Stack gap="md">
+            <Group>
+              <IconBell size={24} />
+              <Title order={3}>Notification Preferences</Title>
+            </Group>
+
+            <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+              <Text size="sm">
+                Customize which notifications you receive and how you're notified.
+              </Text>
+            </Alert>
+
+            {loadingPreferences ? (
+              <Group justify="center" py="md">
+                <Loader size="sm" />
+              </Group>
+            ) : (
+              <>
+                {/* General Settings */}
+                <div>
+                  <Text fw={500} size="sm" mb="xs">General Settings</Text>
+                  <Stack gap="sm">
+                    <Switch
+                      label="Email Notifications"
+                      description="Receive notification emails for important updates"
+                      checked={emailNotifications}
+                      onChange={(e) => setEmailNotifications(e.currentTarget.checked)}
+                    />
+                  </Stack>
+                </div>
+
+                <Divider />
+
+                {/* Notification Types */}
+                <div>
+                  <Text fw={500} size="sm" mb="xs">Notification Types</Text>
+                  <Text size="xs" c="dimmed" mb="md">
+                    Choose which types of notifications you want to receive
+                  </Text>
+                  <Stack gap="sm">
+                    <Checkbox
+                      label="Task Assignments"
+                      description="When you're assigned to a task"
+                      checked={notificationPreferences.task_assigned !== false}
+                      onChange={(e) => setNotificationPreferences({
+                        ...notificationPreferences,
+                        task_assigned: e.currentTarget.checked
+                      })}
+                    />
+                    <Checkbox
+                      label="Task Completions"
+                      description="When a family member completes a task"
+                      checked={notificationPreferences.task_completed !== false}
+                      onChange={(e) => setNotificationPreferences({
+                        ...notificationPreferences,
+                        task_completed: e.currentTarget.checked
+                      })}
+                    />
+                    <Checkbox
+                      label="All Tasks Complete"
+                      description="When someone completes all their tasks"
+                      checked={notificationPreferences.all_tasks_complete !== false}
+                      onChange={(e) => setNotificationPreferences({
+                        ...notificationPreferences,
+                        all_tasks_complete: e.currentTarget.checked
+                      })}
+                    />
+                    <Checkbox
+                      label="Event Updates"
+                      description="When events are created or updated"
+                      checked={notificationPreferences.event_created !== false}
+                      onChange={(e) => setNotificationPreferences({
+                        ...notificationPreferences,
+                        event_created: e.currentTarget.checked,
+                        event_reminder: e.currentTarget.checked
+                      })}
+                    />
+                    <Checkbox
+                      label="Shopping Lists"
+                      description="When shopping lists are created or updated"
+                      checked={notificationPreferences.shopping_list_created !== false}
+                      onChange={(e) => setNotificationPreferences({
+                        ...notificationPreferences,
+                        shopping_list_created: e.currentTarget.checked,
+                        shopping_list_updated: e.currentTarget.checked
+                      })}
+                    />
+                    <Checkbox
+                      label="Budget Alerts"
+                      description="When budget limits are approaching or reached"
+                      checked={notificationPreferences.budget_alert !== false}
+                      onChange={(e) => setNotificationPreferences({
+                        ...notificationPreferences,
+                        budget_alert: e.currentTarget.checked,
+                        budget_limit_reached: e.currentTarget.checked
+                      })}
+                    />
+                    <Checkbox
+                      label="Family Updates"
+                      description="When new members join or recipes are shared"
+                      checked={notificationPreferences.family_member_joined !== false}
+                      onChange={(e) => setNotificationPreferences({
+                        ...notificationPreferences,
+                        family_member_joined: e.currentTarget.checked,
+                        recipe_shared: e.currentTarget.checked
+                      })}
+                    />
+                  </Stack>
+                </div>
+
+                <Group justify="flex-end">
+                  <Button
+                    onClick={handleSaveNotificationPreferences}
+                    loading={savingPreferences}
+                    leftSection={<IconCheck size={16} />}
+                  >
+                    Save Preferences
+                  </Button>
+                </Group>
+              </>
+            )}
+          </Stack>
+        </Card>
 
         <Card shadow="sm" padding="lg" radius="md" withBorder style={{ borderColor: 'var(--mantine-color-red-6)' }}>
           <Stack gap="md">

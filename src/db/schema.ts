@@ -44,6 +44,9 @@ export const users = pgTable('users', {
   familyBucks: numeric('family_bucks', { precision: 10, scale: 2 }).default('0').notNull(), // Current balance
   totalPointsEarned: numeric('total_points_earned', { precision: 10, scale: 2 }).default('0').notNull(), // Lifetime points
   pointsPerTask: numeric('points_per_task', { precision: 10, scale: 2 }).default('10').notNull(), // Points awarded per task completion
+  // Notification Preferences
+  emailNotifications: boolean('email_notifications').default(true).notNull(),
+  notificationPreferences: text('notification_preferences'), // JSON object of notification type preferences
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
