@@ -17,15 +17,23 @@ import {
   MultiSelect,
   ColorInput,
   Checkbox,
+  Menu,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
 import { Calendar } from '@mantine/dates';
-import { IconPlus, IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconEdit, IconCalendar as IconCalendarExport, IconBrandGoogle, IconBrandWindows, IconBrandYahoo, IconDownload } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import dayjs from 'dayjs';
+import {
+  getGoogleCalendarUrl,
+  getOutlookCalendarUrl,
+  getOffice365CalendarUrl,
+  getYahooCalendarUrl,
+  getIcsDownloadUrl,
+} from '@/lib/calendar-utils';
 
 type Event = {
   id: string;
@@ -1150,28 +1158,118 @@ export default function CalendarPage() {
               </div>
             )}
 
-            <Group justify="flex-end" mt="md">
-              <Button
-                variant="subtle"
-                onClick={() => {
-                  setEventDetailModalOpened(false);
-                  openEditModal(selectedEvent);
-                }}
-                leftSection={<IconEdit size={16} />}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="subtle"
-                color="red"
-                onClick={() => {
-                  setEventDetailModalOpened(false);
-                  handleDelete(selectedEvent.id);
-                }}
-                leftSection={<IconTrash size={16} />}
-              >
-                Delete
-              </Button>
+            <Group justify="space-between" mt="md">
+              <Menu shadow="md" width={250}>
+                <Menu.Target>
+                  <Button
+                    variant="light"
+                    leftSection={<IconCalendarExport size={16} />}
+                  >
+                    Add to Calendar
+                  </Button>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Label>Choose your calendar</Menu.Label>
+                  <Menu.Item
+                    leftSection={<IconBrandGoogle size={16} />}
+                    component="a"
+                    href={getGoogleCalendarUrl({
+                      title: selectedEvent.title,
+                      description: selectedEvent.description,
+                      location: selectedEvent.location,
+                      startTime: selectedEvent.startTime,
+                      endTime: selectedEvent.endTime,
+                      url: selectedEvent.url,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Google Calendar
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconBrandWindows size={16} />}
+                    component="a"
+                    href={getOutlookCalendarUrl({
+                      title: selectedEvent.title,
+                      description: selectedEvent.description,
+                      location: selectedEvent.location,
+                      startTime: selectedEvent.startTime,
+                      endTime: selectedEvent.endTime,
+                      url: selectedEvent.url,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Outlook (Web)
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconBrandWindows size={16} />}
+                    component="a"
+                    href={getOffice365CalendarUrl({
+                      title: selectedEvent.title,
+                      description: selectedEvent.description,
+                      location: selectedEvent.location,
+                      startTime: selectedEvent.startTime,
+                      endTime: selectedEvent.endTime,
+                      url: selectedEvent.url,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Office 365
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconBrandYahoo size={16} />}
+                    component="a"
+                    href={getYahooCalendarUrl({
+                      title: selectedEvent.title,
+                      description: selectedEvent.description,
+                      location: selectedEvent.location,
+                      startTime: selectedEvent.startTime,
+                      endTime: selectedEvent.endTime,
+                      url: selectedEvent.url,
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Yahoo Calendar
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconDownload size={16} />}
+                    component="a"
+                    href={getIcsDownloadUrl(selectedEvent.id)}
+                    download
+                  >
+                    Download .ics file
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+
+              <Group>
+                <Button
+                  variant="subtle"
+                  onClick={() => {
+                    setEventDetailModalOpened(false);
+                    openEditModal(selectedEvent);
+                  }}
+                  leftSection={<IconEdit size={16} />}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="subtle"
+                  color="red"
+                  onClick={() => {
+                    setEventDetailModalOpened(false);
+                    handleDelete(selectedEvent.id);
+                  }}
+                  leftSection={<IconTrash size={16} />}
+                >
+                  Delete
+                </Button>
+              </Group>
             </Group>
           </Stack>
         )}
