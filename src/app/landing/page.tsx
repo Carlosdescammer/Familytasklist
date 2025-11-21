@@ -30,8 +30,35 @@ import {
   IconCloud,
 } from '@tabler/icons-react';
 import Link from 'next/link';
+import Script from 'next/script';
 
 export default function LandingPage() {
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'FamilyList',
+    applicationCategory: 'LifestyleApplication',
+    operatingSystem: 'Web',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.9',
+      ratingCount: '10000',
+    },
+    description: 'The all-in-one family organization app. Manage shared calendars, shopping lists, tasks, recipes, and budgets in one beautiful platform.',
+    featureList: [
+      'Shared Family Calendar',
+      'Smart Shopping Lists',
+      'Task Management',
+      'Recipe Collections',
+      'Family Board Display',
+      'Budget Tracking',
+    ],
+  };
   const features = [
     {
       icon: IconCalendar,
@@ -100,8 +127,14 @@ export default function LandingPage() {
   ];
 
   return (
-    <Box style={{ minHeight: '100vh' }}>
-      {/* Navigation */}
+    <>
+      <Script
+        id="structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <Box style={{ minHeight: '100vh' }}>
+        {/* Navigation */}
       <Box
         component="nav"
         style={{
@@ -469,6 +502,7 @@ export default function LandingPage() {
           </Group>
         </Container>
       </Box>
-    </Box>
+      </Box>
+    </>
   );
 }

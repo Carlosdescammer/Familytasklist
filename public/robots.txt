@@ -1,0 +1,15 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://familylist.app/sitemap.xml
+
+# Disallow access to API routes and private pages
+User-agent: *
+Disallow: /api/
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /board/
