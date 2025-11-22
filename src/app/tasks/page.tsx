@@ -80,9 +80,10 @@ export default function TasksPage() {
     }
   };
 
-  const handlePhotoChange = (file: File | null) => {
+  const handlePhotoChange = async (file: File | null) => {
     setPhotoFile(file);
     if (file) {
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
@@ -98,9 +99,10 @@ export default function TasksPage() {
     setPhotoPreview(null);
   };
 
-  const handleCompletionPhotoChange = (file: File | null) => {
+  const handleCompletionPhotoChange = async (file: File | null) => {
     setCompletionPhotoFile(file);
     if (file) {
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setCompletionPhotoPreview(reader.result as string);
@@ -134,6 +136,26 @@ export default function TasksPage() {
 
     setLoading(true);
     try {
+      let photoUrl: string | undefined = undefined;
+
+      // Upload photo to Vercel Blob if present
+      if (photoFile) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', photoFile);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload photo');
+        }
+
+        const uploadData = await uploadRes.json();
+        photoUrl = uploadData.url;
+      }
+
       const url = editingTask ? `/api/tasks/${editingTask.id}` : '/api/tasks';
       const method = editingTask ? 'PUT' : 'POST';
 
@@ -147,7 +169,7 @@ export default function TasksPage() {
           priority: formData.priority,
           tags: formData.tags,
           assignedTo: formData.assignedTo || undefined,
-          photoUrl: photoPreview || undefined, // Include base64 photo if available
+          photoUrl: photoUrl, // Include Vercel Blob URL if available
         }),
       });
 
@@ -197,12 +219,32 @@ export default function TasksPage() {
 
     setIsCompletingTask(true);
     try {
+      let completionPhotoUrl: string | undefined = undefined;
+
+      // Upload completion photo to Vercel Blob if present
+      if (!skipPhoto && completionPhotoFile) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', completionPhotoFile);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload completion photo');
+        }
+
+        const uploadData = await uploadRes.json();
+        completionPhotoUrl = uploadData.url;
+      }
+
       const res = await fetch(`/api/tasks/${taskToComplete.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           completed: true,
-          completionPhotoUrl: skipPhoto ? undefined : (completionPhotoPreview || undefined),
+          completionPhotoUrl: completionPhotoUrl,
         }),
       });
 

@@ -18,10 +18,14 @@ import {
   ColorInput,
   Checkbox,
   Menu,
+  FileInput,
+  Image,
+  CloseButton,
+  Box,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
 import { Calendar } from '@mantine/dates';
-import { IconPlus, IconTrash, IconEdit, IconCalendar as IconCalendarExport, IconBrandGoogle, IconBrandWindows, IconBrandYahoo, IconDownload } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconEdit, IconCalendar as IconCalendarExport, IconBrandGoogle, IconBrandWindows, IconBrandYahoo, IconDownload, IconPhoto } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
@@ -47,6 +51,7 @@ type Event = {
   notes?: string;
   startTime: string;
   endTime: string;
+  photoUrl?: string;
 };
 
 type Task = {
@@ -92,6 +97,8 @@ export default function CalendarPage() {
   const [selectedShoppingList, setSelectedShoppingList] = useState<ShoppingList | null>(null);
   const [editingShoppingList, setEditingShoppingList] = useState<ShoppingList | null>(null);
   const [familyMembers, setFamilyMembers] = useState<any[]>([]);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -168,6 +175,24 @@ export default function CalendarPage() {
     }
   };
 
+  const handlePhotoChange = async (file: File | null) => {
+    setPhotoFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(null);
+    }
+  };
+
+  const clearPhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       notifications.show({ title: 'Error', message: 'Title is required', color: 'red' });
@@ -186,6 +211,25 @@ export default function CalendarPage() {
 
     setLoading(true);
     try {
+      let photoUrl: string | undefined = undefined;
+
+      if (photoFile) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', photoFile);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload photo');
+        }
+
+        const uploadData = await uploadRes.json();
+        photoUrl = uploadData.url;
+      }
+
       const url = editingEvent ? `/api/events/${editingEvent.id}` : '/api/events';
       const method = editingEvent ? 'PUT' : 'POST';
 
@@ -203,6 +247,7 @@ export default function CalendarPage() {
           notes: formData.notes,
           startTime: formData.startTime.toISOString(),
           endTime: formData.endTime.toISOString(),
+          photoUrl,
         }),
       });
 
@@ -378,6 +423,7 @@ export default function CalendarPage() {
     setShoppingListName('');
     setLinkExistingList(false);
     setSelectedExistingListId(null);
+    clearPhoto();
   };
 
   const openEditModal = (event: Event) => {
@@ -936,6 +982,35 @@ export default function CalendarPage() {
             rows={3}
             description="Extra details or reminders about this event"
           />
+          <FileInput
+            label="Attach Photo"
+            placeholder="Click to upload a photo (optional)"
+            accept="image/*"
+            value={photoFile}
+            onChange={handlePhotoChange}
+            leftSection={<IconPhoto size={16} />}
+            description="Add a photo to your event"
+            clearable
+          />
+          {photoPreview && (
+            <Box mt="sm" style={{ position: 'relative' }}>
+              <Group justify="space-between" mb="xs">
+                <Text size="sm" fw={500}>Photo Preview:</Text>
+                <CloseButton
+                  onClick={clearPhoto}
+                  aria-label="Remove photo"
+                  size="sm"
+                />
+              </Group>
+              <Image
+                src={photoPreview}
+                alt="Event photo preview"
+                radius="md"
+                h={200}
+                fit="contain"
+              />
+            </Box>
+          )}
           {!editingEvent && (
             <>
               <Checkbox
@@ -1048,6 +1123,19 @@ export default function CalendarPage() {
                 <Text size="lg" fw={600}>{selectedEvent.title}</Text>
               </Group>
             </div>
+
+            {selectedEvent.photoUrl && (
+              <div>
+                <Text size="sm" fw={500} c="dimmed" mb="xs">Event Photo</Text>
+                <Image
+                  src={selectedEvent.photoUrl}
+                  alt={selectedEvent.title}
+                  radius="md"
+                  h={300}
+                  fit="contain"
+                />
+              </div>
+            )}
 
             <div>
               <Text size="sm" fw={500} c="dimmed">Date & Time</Text>
