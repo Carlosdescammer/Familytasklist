@@ -32,7 +32,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PhotoUpload from '@/components/PhotoUpload';
-import { useUser } from '@clerk/nextjs';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 type Photo = {
   id: string;
@@ -63,7 +63,7 @@ type Photo = {
 };
 
 export default function PhotosPage() {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useCurrentUser();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<string>('all');
@@ -71,7 +71,6 @@ export default function PhotosPage() {
   const [detailModalOpened, setDetailModalOpened] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
-  const [familyId, setFamilyId] = useState<string>('');
 
   const [editForm, setEditForm] = useState({
     caption: '',
@@ -79,15 +78,8 @@ export default function PhotosPage() {
     isFavorite: false,
   });
 
-  // Get familyId from localStorage on mount (client-side only)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedFamilyId = localStorage.getItem('selectedFamilyId');
-      if (storedFamilyId) {
-        setFamilyId(storedFamilyId);
-      }
-    }
-  }, []);
+  // Get familyId from user's account
+  const familyId = user?.familyId || '';
 
   const fetchPhotos = useCallback(async () => {
     if (!familyId) return;

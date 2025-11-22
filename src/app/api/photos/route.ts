@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { photos, familyMembers } from '@/db/schema';
+import { photos, familyMembers, users } from '@/db/schema';
 import { and, eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -21,9 +21,18 @@ const createPhotoSchema = z.object({
 // GET /api/photos?familyId=xxx - Get all photos for a family
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get database user ID from Clerk ID
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -36,7 +45,7 @@ export async function GET(request: NextRequest) {
     // Verify user is a member of the family
     const membership = await db.query.familyMembers.findFirst({
       where: and(
-        eq(familyMembers.userId, userId),
+        eq(familyMembers.userId, dbUser.id),
         eq(familyMembers.familyId, familyId)
       ),
     });
@@ -84,18 +93,28 @@ export async function GET(request: NextRequest) {
 // POST /api/photos - Create a new photo
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get database user ID from Clerk ID
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const body = await request.json();
+    console.log('Creating photo with data:', body);
     const validatedData = createPhotoSchema.parse(body);
 
     // Verify user is a member of the family
     const membership = await db.query.familyMembers.findFirst({
       where: and(
-        eq(familyMembers.userId, userId),
+        eq(familyMembers.userId, dbUser.id),
         eq(familyMembers.familyId, validatedData.familyId)
       ),
     });
@@ -109,13 +128,14 @@ export async function POST(request: NextRequest) {
       .insert(photos)
       .values({
         ...validatedData,
-        uploadedBy: userId,
+        uploadedBy: dbUser.id,
       })
       .returning();
 
     return NextResponse.json(newPhoto, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('Photo validation error:', error.issues);
       return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error('Error creating photo:', error);

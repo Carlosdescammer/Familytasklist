@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Button, Group, Text, Stack, Image, CloseButton, ActionIcon, Box, Paper } from '@mantine/core';
 import { Dropzone, IMAGE_MIME_TYPE, FileWithPath } from '@mantine/dropzone';
 import { IconUpload, IconPhoto, IconX, IconTrash } from '@tabler/icons-react';
-import { useUploadThing } from '@/lib/uploadthing';
 import { notifications } from '@mantine/notifications';
 
 interface PhotoUploadProps {
@@ -30,60 +29,6 @@ export default function PhotoUpload({
   const [uploading, setUploading] = useState(false);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
-  const { startUpload } = useUploadThing('photoUploader', {
-    onClientUploadComplete: async (res) => {
-      const urls = res?.map((r) => r.url) || [];
-
-      // Save photo metadata to database
-      try {
-        for (const url of urls) {
-          const fileName = files[urls.indexOf(url)]?.name || 'photo.jpg';
-          const fileSize = files[urls.indexOf(url)]?.size || 0;
-
-          await fetch('/api/photos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              familyId,
-              url,
-              fileName,
-              fileSize,
-              eventId,
-              recipeId,
-            }),
-          });
-        }
-
-        notifications.show({
-          title: 'Success',
-          message: `${urls.length} photo${urls.length > 1 ? 's' : ''} uploaded successfully`,
-          color: 'green',
-        });
-
-        setFiles([]);
-        setPreviewUrls([]);
-        onUploadComplete?.(urls);
-      } catch (error) {
-        console.error('Error saving photo metadata:', error);
-        notifications.show({
-          title: 'Error',
-          message: 'Failed to save photo metadata',
-          color: 'red',
-        });
-      }
-      setUploading(false);
-    },
-    onUploadError: (error) => {
-      console.error('Upload error:', error);
-      notifications.show({
-        title: 'Upload failed',
-        message: error.message,
-        color: 'red',
-      });
-      setUploading(false);
-    },
-  });
-
   const handleDrop = (droppedFiles: FileWithPath[]) => {
     const newFiles = [...files, ...droppedFiles].slice(0, maxFiles);
     setFiles(newFiles);
@@ -106,12 +51,73 @@ export default function PhotoUpload({
   const handleUpload = async () => {
     if (files.length === 0) return;
 
+    if (!familyId || familyId === '') {
+      notifications.show({
+        title: 'Error',
+        message: 'Please select a family first',
+        color: 'red',
+      });
+      return;
+    }
+
     setUploading(true);
+
     try {
-      await startUpload(files);
-    } catch (error) {
+      const uploadedUrls: string[] = [];
+
+      // Upload each file to Vercel Blob
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Upload to Vercel Blob
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+
+        const uploadData = await uploadRes.json();
+        uploadedUrls.push(uploadData.url);
+
+        // Save photo metadata to database
+        await fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            familyId,
+            url: uploadData.url,
+            fileName: file.name,
+            fileSize: file.size,
+            eventId,
+            recipeId,
+          }),
+        });
+      }
+
+      notifications.show({
+        title: 'Success',
+        message: `${uploadedUrls.length} photo${uploadedUrls.length > 1 ? 's' : ''} uploaded successfully`,
+        color: 'green',
+      });
+
+      setFiles([]);
+      setPreviewUrls([]);
+      setUploading(false);
+      onUploadComplete?.(uploadedUrls);
+    } catch (error: any) {
       console.error('Upload error:', error);
       setUploading(false);
+
+      notifications.show({
+        title: 'Upload Error',
+        message: error?.message || 'Something went wrong. Please try again.',
+        color: 'red',
+      });
     }
   };
 

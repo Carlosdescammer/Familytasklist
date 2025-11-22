@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { photos, familyMembers } from '@/db/schema';
+import { photos, familyMembers, users } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -18,9 +18,18 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get database user ID from Clerk ID
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const { id } = await params;
@@ -56,7 +65,7 @@ export async function GET(
     // Verify user is a member of the family
     const membership = await db.query.familyMembers.findFirst({
       where: and(
-        eq(familyMembers.userId, userId),
+        eq(familyMembers.userId, dbUser.id),
         eq(familyMembers.familyId, photo.familyId)
       ),
     });
@@ -81,9 +90,18 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get database user ID from Clerk ID
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const { id } = await params;
@@ -102,7 +120,7 @@ export async function PATCH(
     // Verify user is a member of the family
     const membership = await db.query.familyMembers.findFirst({
       where: and(
-        eq(familyMembers.userId, userId),
+        eq(familyMembers.userId, dbUser.id),
         eq(familyMembers.familyId, photo.familyId)
       ),
     });
@@ -140,9 +158,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get database user ID from Clerk ID
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const { id } = await params;
@@ -159,7 +186,7 @@ export async function DELETE(
     // Verify user is a member of the family
     const membership = await db.query.familyMembers.findFirst({
       where: and(
-        eq(familyMembers.userId, userId),
+        eq(familyMembers.userId, dbUser.id),
         eq(familyMembers.familyId, photo.familyId)
       ),
     });
