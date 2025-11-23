@@ -42,7 +42,7 @@ import {
 } from '@tabler/icons-react';
 import { useClerk } from '@clerk/nextjs';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { canAccessPage, type PageName } from '@/lib/page-access';
 import { FamilySwitcher } from '@/components/FamilySwitcher';
@@ -78,6 +78,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useCurrentUser();
   const { signOut } = useClerk();
   const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
@@ -130,6 +131,59 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       console.error('Error marking notifications as read:', error);
     } finally {
       setLoadingNotifications(false);
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark notification as read
+    if (!notification.read) {
+      try {
+        await fetch('/api/notifications', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notificationIds: [notification.id] }),
+        });
+
+        // Update local state
+        setNotifications(notifications.map(n =>
+          n.id === notification.id ? { ...n, read: true } : n
+        ));
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+
+    // Close the popover
+    closeNotif();
+
+    // Navigate based on notification type
+    switch (notification.type) {
+      case 'task_assigned':
+      case 'task_completed':
+      case 'all_tasks_complete':
+        router.push('/tasks');
+        break;
+      case 'event_created':
+      case 'event_reminder':
+        router.push('/calendar');
+        break;
+      case 'shopping_list_created':
+      case 'shopping_list_updated':
+        router.push('/shopping');
+        break;
+      case 'budget_alert':
+      case 'budget_limit_reached':
+        router.push('/budget');
+        break;
+      case 'family_member_joined':
+        router.push('/family');
+        break;
+      case 'recipe_shared':
+        router.push('/recipes');
+        break;
+      default:
+        // For unknown types, go to dashboard
+        router.push('/');
     }
   };
 
@@ -285,6 +339,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         {filteredNotifications.map((notification) => (
                           <div
                             key={notification.id}
+                            onClick={() => handleNotificationClick(notification)}
                             style={{
                               padding: '12px',
                               borderRadius: '8px',
@@ -292,6 +347,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                                 ? 'transparent'
                                 : 'var(--mantine-color-blue-0)',
                               border: '1px solid var(--mantine-color-gray-3)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'none';
                             }}
                           >
                             <Group justify="space-between" align="flex-start" mb="xs">
