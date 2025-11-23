@@ -31,7 +31,6 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { notifications } from '@mantine/notifications';
 import AppLayout from '@/components/AppLayout';
 import PageAccessGuard from '@/components/PageAccessGuard';
-import { generateCalendarToken } from '@/lib/calendar-token';
 import { PAGE_LABELS, PAGE_ROUTES, getAccessiblePages } from '@/lib/page-access';
 
 const COMMON_STORES = [
@@ -96,11 +95,17 @@ export default function SettingsPage() {
   const [boardWidgets, setBoardWidgets] = useState<string[]>(['events', 'tasks', 'shopping']);
   const [savingBoard, setSavingBoard] = useState(false);
 
+  // Calendar token state
+  const [calendarToken, setCalendarToken] = useState<string>('');
+
   useEffect(() => {
     fetchFamily();
     fetchAiUsageStats();
     fetchNotificationPreferences();
-  }, []);
+    if (user?.familyId) {
+      fetchCalendarToken();
+    }
+  }, [user?.familyId]);
 
   const fetchFamily = async () => {
     try {
@@ -151,6 +156,25 @@ export default function SettingsPage() {
       console.error('Error fetching notification preferences:', error);
     } finally {
       setLoadingPreferences(false);
+    }
+  };
+
+  const fetchCalendarToken = async () => {
+    if (!user?.familyId) return;
+
+    try {
+      const res = await fetch('/api/calendar/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ familyId: user.familyId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCalendarToken(data.token);
+      }
+    } catch (error) {
+      console.error('Error fetching calendar token:', error);
     }
   };
 
@@ -262,8 +286,7 @@ export default function SettingsPage() {
   };
 
   const getCalendarFeedUrl = () => {
-    if (!user?.familyId) return '';
-    const token = generateCalendarToken(user.familyId);
+    if (!user?.familyId || !calendarToken) return '';
 
     // Get base URL and force HTTPS in production
     let baseUrl = '';
@@ -275,7 +298,7 @@ export default function SettingsPage() {
       }
     }
 
-    return `${baseUrl}/api/calendar/feed/${user.familyId}/${token}`;
+    return `${baseUrl}/api/calendar/feed/${user.familyId}/${calendarToken}`;
   };
 
   const copyCalendarUrl = () => {

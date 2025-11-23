@@ -5,7 +5,12 @@ import { createHash } from 'crypto';
  * This token allows anyone with the URL to access the family's calendar feed
  */
 export function generateCalendarToken(familyId: string): string {
-  const secret = process.env.CALENDAR_SECRET || 'default-secret-change-this';
+  const secret = process.env.CALENDAR_SECRET;
+
+  if (!secret) {
+    throw new Error('CALENDAR_SECRET environment variable is not set');
+  }
+
   const hash = createHash('sha256')
     .update(`${familyId}:${secret}`)
     .digest('hex');

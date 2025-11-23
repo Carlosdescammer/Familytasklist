@@ -113,7 +113,7 @@ Respond in valid JSON format only, no markdown formatting:
   "currentPrice": 0.00,
   "priceRange": "$X-$Y",
   "bestStore": "store name or null",
-  "deals": ["deal1", "deal2"],
+  "deals": ["deal1", "deal2", "deal3"],
   "brandOptions": [
     {
       "brand": "Brand Name",
@@ -203,7 +203,7 @@ Respond in valid JSON format:
   "currentPrice": 0.00,
   "priceRange": "$X-$Y",
   "bestStore": "store name or null",
-  "deals": ["deal1", "deal2"],
+  "deals": ["deal1", "deal2", "deal3"],
   "brandOptions": [
     {
       "brand": "Brand Name",

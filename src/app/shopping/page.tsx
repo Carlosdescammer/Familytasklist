@@ -1359,16 +1359,59 @@ export default function ShoppingPage() {
                         Active Deals & Coupons
                       </Text>
                       <Stack gap="xs">
-                        {deals.map((deal: string, idx: number) => (
-                          <Card key={idx} padding="sm" withBorder style={{ borderColor: 'var(--mantine-color-orange-6)' }}>
-                            <Group gap="xs" align="flex-start">
-                              <Text size="lg" style={{ flexShrink: 0 }}>🏷️</Text>
-                              <Text size="sm" fw={500} c="orange" style={{ flex: 1 }}>
-                                {deal}
-                              </Text>
-                            </Group>
-                          </Card>
-                        ))}
+                        {deals.map((deal: any, idx: number) => {
+                          // Handle both string format (old) and object format (from previous implementation)
+                          const dealText = typeof deal === 'string' ? deal : (deal?.text || '');
+                          const dealUrl = (typeof deal === 'object' && deal?.url) ? deal.url : null;
+                          const isClickable = dealUrl !== null;
+
+                          // Skip if no deal text
+                          if (!dealText || dealText.trim() === '') return null;
+
+                          return (
+                            <Card
+                              key={idx}
+                              padding="sm"
+                              withBorder
+                              style={{
+                                borderColor: 'var(--mantine-color-orange-6)',
+                                cursor: isClickable ? 'pointer' : 'default',
+                                transition: 'all 0.2s ease',
+                              }}
+                              onClick={() => {
+                                if (isClickable && dealUrl) {
+                                  window.open(dealUrl, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
+                              onMouseEnter={(e) => {
+                                if (isClickable) {
+                                  e.currentTarget.style.backgroundColor = 'var(--mantine-color-orange-0)';
+                                  e.currentTarget.style.transform = 'translateX(4px)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (isClickable) {
+                                  e.currentTarget.style.backgroundColor = '';
+                                  e.currentTarget.style.transform = '';
+                                }
+                              }}
+                            >
+                              <Group gap="xs" align="flex-start">
+                                <Text size="lg" style={{ flexShrink: 0 }}>🏷️</Text>
+                                <div style={{ flex: 1 }}>
+                                  <Text size="sm" fw={500} c="orange">
+                                    {dealText}
+                                  </Text>
+                                  {isClickable && (
+                                    <Text size="xs" c="dimmed" mt={4}>
+                                      Click to view deals page
+                                    </Text>
+                                  )}
+                                </div>
+                              </Group>
+                            </Card>
+                          );
+                        })}
                       </Stack>
                     </div>
                   );

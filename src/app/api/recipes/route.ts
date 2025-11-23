@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { recipes } from '@/db/schema';
+import { recipes, recipeRatings, recipeComments } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
 import { eq, and, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -86,7 +86,28 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(allRecipes);
+    // Fetch rating and comment counts for each recipe
+    const recipesWithCounts = await Promise.all(
+      allRecipes.map(async (recipe) => {
+        const [ratingCount] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(recipeRatings)
+          .where(eq(recipeRatings.recipeId, recipe.id));
+
+        const [commentCount] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(recipeComments)
+          .where(eq(recipeComments.recipeId, recipe.id));
+
+        return {
+          ...recipe,
+          ratingCount: ratingCount?.count || 0,
+          commentCount: commentCount?.count || 0,
+        };
+      })
+    );
+
+    return NextResponse.json(recipesWithCounts);
   } catch (error) {
     console.error('Error fetching recipes:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

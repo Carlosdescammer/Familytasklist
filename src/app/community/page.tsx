@@ -66,6 +66,8 @@ type Recipe = {
     name?: string;
     email: string;
   };
+  ratingCount?: number;
+  commentCount?: number;
 };
 
 type RecipeCategory = {
@@ -386,11 +388,11 @@ export default function CommunityPage() {
                     <Group gap="xs">
                       <Group gap={4}>
                         <IconStar size={14} />
-                        <Text size="xs">0</Text>
+                        <Text size="xs">{recipe.ratingCount || 0}</Text>
                       </Group>
                       <Group gap={4}>
                         <IconMessage size={14} />
-                        <Text size="xs">0</Text>
+                        <Text size="xs">{recipe.commentCount || 0}</Text>
                       </Group>
                     </Group>
 

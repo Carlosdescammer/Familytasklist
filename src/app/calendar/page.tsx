@@ -536,9 +536,13 @@ export default function CalendarPage() {
         </Group>
 
         <Calendar
-          date={selectedDate}
-          onDateChange={(date) => setSelectedDate(date)}
+          value={selectedDate}
+          onChange={(date) => date && setSelectedDate(date)}
           renderDay={renderDay}
+          getDayProps={(date) => ({
+            style: { cursor: 'pointer' },
+            onClick: () => setSelectedDate(date)
+          })}
         />
 
         <Stack gap="md">
