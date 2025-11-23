@@ -22,7 +22,7 @@ import {
   Select,
   SegmentedControl,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import {
   IconHome,
   IconCalendar,
@@ -83,6 +83,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [notificationFilter, setNotificationFilter] = useState<string>('all');
   const [notificationReadFilter, setNotificationReadFilter] = useState<string>('all');
+
+  // Mobile detection
+  const isMobile = useMediaQuery('(max-width: 48em)'); // sm breakpoint
 
   useEffect(() => {
     setMounted(true);
@@ -165,10 +168,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         breakpoint: 'sm',
         collapsed: { mobile: !opened },
       }}
-      padding="md"
+      padding={{ base: 'xs', sm: 'md' }}
     >
       <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
+        <Group h="100%" px={{ base: 'xs', sm: 'md' }} justify="space-between">
           <Group>
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
             <Text size="xl" fw={700}>
@@ -197,7 +200,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
             {/* Notification Bell */}
             <Popover
-              width={400}
+              width={isMobile ? '90vw' : 400}
               position="bottom-end"
               shadow="md"
               opened={notifOpened}
@@ -277,7 +280,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         : 'No notifications match your filters'}
                     </Text>
                   ) : (
-                    <ScrollArea h={400}>
+                    <ScrollArea h={isMobile ? 300 : 400}>
                       <Stack gap="xs">
                         {filteredNotifications.map((notification) => (
                           <div
@@ -321,7 +324,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <UnstyledButton>
                   <Group gap="xs">
                     <IconUser size={24} />
-                    <Text size="sm">{user?.name || user?.email?.split('@')[0] || 'User'}</Text>
+                    <Text size="sm" visibleFrom="sm">{user?.name || user?.email?.split('@')[0] || 'User'}</Text>
                   </Group>
                 </UnstyledButton>
               </Menu.Target>
