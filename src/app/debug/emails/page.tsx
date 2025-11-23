@@ -255,15 +255,15 @@ export default function EmailDebugPage() {
 
         <Card shadow="sm" padding="lg" radius="md" withBorder>
           <Stack gap="sm">
-            <Title order={4}>Configuration Status</Title>
-            <Text size="sm">
-              <strong>Resend API Key:</strong> {process.env.NEXT_PUBLIC_RESEND_CONFIGURED === 'true' ? '✓ Configured' : '✗ Not configured'}
-            </Text>
+            <Title order={4}>Email Configuration</Title>
             <Text size="sm">
               <strong>From Email:</strong> noreply@famtask.xyz
             </Text>
             <Text size="sm">
               <strong>Base URL:</strong> {typeof window !== 'undefined' ? window.location.origin : 'https://famtask.xyz'}
+            </Text>
+            <Text size="sm" c="dimmed">
+              Email sending is configured on the server. Check the API response for actual sending status.
             </Text>
           </Stack>
         </Card>
