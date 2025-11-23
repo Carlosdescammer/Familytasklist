@@ -332,6 +332,72 @@ export const photos = pgTable('photos', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Forum Categories table
+export const forumCategories = pgTable('forum_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
+  description: text('description'),
+  icon: text('icon'), // Icon name or emoji
+  slug: text('slug').notNull().unique(), // URL-friendly name
+  order: integer('order').default(0).notNull(), // Display order
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Forum Posts table
+export const forumPosts = pgTable('forum_posts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  categoryId: uuid('category_id')
+    .references(() => forumCategories.id, { onDelete: 'cascade' })
+    .notNull(),
+  authorId: uuid('author_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(), // Track which family the author belongs to
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  tags: text('tags'), // JSON array of tags
+  isPinned: boolean('is_pinned').default(false).notNull(),
+  isLocked: boolean('is_locked').default(false).notNull(),
+  viewCount: integer('view_count').default(0).notNull(),
+  replyCount: integer('reply_count').default(0).notNull(),
+  lastReplyAt: timestamp('last_reply_at', { withTimezone: true }),
+  lastReplyBy: uuid('last_reply_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Forum Replies table
+export const forumReplies = pgTable('forum_replies', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  postId: uuid('post_id')
+    .references(() => forumPosts.id, { onDelete: 'cascade' })
+    .notNull(),
+  authorId: uuid('author_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  familyId: uuid('family_id')
+    .references(() => families.id, { onDelete: 'cascade' })
+    .notNull(),
+  content: text('content').notNull(),
+  parentReplyId: uuid('parent_reply_id').references(() => forumReplies.id, { onDelete: 'set null' }), // For nested replies
+  isAccepted: boolean('is_accepted').default(false).notNull(), // For Q&A style posts
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Forum Reactions table (likes/upvotes for posts and replies)
+export const forumReactions = pgTable('forum_reactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  postId: uuid('post_id').references(() => forumPosts.id, { onDelete: 'cascade' }),
+  replyId: uuid('reply_id').references(() => forumReplies.id, { onDelete: 'cascade' }),
+  reactionType: text('reaction_type').default('like').notNull(), // 'like', 'helpful', etc.
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
   users: many(users, {
@@ -543,6 +609,67 @@ export const photosRelations = relations(photos, ({ one }) => ({
   }),
 }));
 
+export const forumCategoriesRelations = relations(forumCategories, ({ many }) => ({
+  posts: many(forumPosts),
+}));
+
+export const forumPostsRelations = relations(forumPosts, ({ one, many }) => ({
+  category: one(forumCategories, {
+    fields: [forumPosts.categoryId],
+    references: [forumCategories.id],
+  }),
+  author: one(users, {
+    fields: [forumPosts.authorId],
+    references: [users.id],
+  }),
+  family: one(families, {
+    fields: [forumPosts.familyId],
+    references: [families.id],
+  }),
+  lastReplyByUser: one(users, {
+    fields: [forumPosts.lastReplyBy],
+    references: [users.id],
+  }),
+  replies: many(forumReplies),
+  reactions: many(forumReactions),
+}));
+
+export const forumRepliesRelations = relations(forumReplies, ({ one, many }) => ({
+  post: one(forumPosts, {
+    fields: [forumReplies.postId],
+    references: [forumPosts.id],
+  }),
+  author: one(users, {
+    fields: [forumReplies.authorId],
+    references: [users.id],
+  }),
+  family: one(families, {
+    fields: [forumReplies.familyId],
+    references: [families.id],
+  }),
+  parentReply: one(forumReplies, {
+    fields: [forumReplies.parentReplyId],
+    references: [forumReplies.id],
+  }),
+  childReplies: many(forumReplies),
+  reactions: many(forumReactions),
+}));
+
+export const forumReactionsRelations = relations(forumReactions, ({ one }) => ({
+  user: one(users, {
+    fields: [forumReactions.userId],
+    references: [users.id],
+  }),
+  post: one(forumPosts, {
+    fields: [forumReactions.postId],
+    references: [forumPosts.id],
+  }),
+  reply: one(forumReplies, {
+    fields: [forumReactions.replyId],
+    references: [forumReplies.id],
+  }),
+}));
+
 // NextAuth.js adapter tables (required by @auth/drizzle-adapter)
 export const authUsers = pgTable('user', {
   id: text('id').notNull().primaryKey(),
@@ -629,3 +756,11 @@ export type Expense = typeof expenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
 export type Photo = typeof photos.$inferSelect;
 export type NewPhoto = typeof photos.$inferInsert;
+export type ForumCategory = typeof forumCategories.$inferSelect;
+export type NewForumCategory = typeof forumCategories.$inferInsert;
+export type ForumPost = typeof forumPosts.$inferSelect;
+export type NewForumPost = typeof forumPosts.$inferInsert;
+export type ForumReply = typeof forumReplies.$inferSelect;
+export type NewForumReply = typeof forumReplies.$inferInsert;
+export type ForumReaction = typeof forumReactions.$inferSelect;
+export type NewForumReaction = typeof forumReactions.$inferInsert;
