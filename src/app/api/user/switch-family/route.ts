@@ -43,10 +43,12 @@ export async function POST(req: NextRequest) {
       .set({ activeFamilyId: familyId })
       .where(eq(users.id, session.user.id));
 
+    const family = Array.isArray(membership.family) ? membership.family[0] : membership.family;
+
     return NextResponse.json({
       success: true,
       activeFamilyId: familyId,
-      familyName: membership.family.name,
+      familyName: family.name,
       roleInFamily: membership.roleInFamily,
     });
   } catch (error) {
