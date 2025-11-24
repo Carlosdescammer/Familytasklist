@@ -369,7 +369,7 @@ export const forumPosts = pgTable('forum_posts', {
 });
 
 // Forum Replies table
-export const forumReplies = pgTable('forum_replies', {
+export const forumReplies: ReturnType<typeof pgTable<'forum_replies', any>> = pgTable('forum_replies', {
   id: uuid('id').primaryKey().defaultRandom(),
   postId: uuid('post_id')
     .references(() => forumPosts.id, { onDelete: 'cascade' })
