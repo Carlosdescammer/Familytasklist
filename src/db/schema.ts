@@ -369,7 +369,7 @@ export const forumPosts = pgTable('forum_posts', {
 });
 
 // Forum Replies table
-export const forumReplies: ReturnType<typeof pgTable<'forum_replies', any>> = pgTable('forum_replies', {
+export const forumReplies = pgTable('forum_replies', {
   id: uuid('id').primaryKey().defaultRandom(),
   postId: uuid('post_id')
     .references(() => forumPosts.id, { onDelete: 'cascade' })
@@ -380,7 +380,7 @@ export const forumReplies: ReturnType<typeof pgTable<'forum_replies', any>> = pg
     .references(() => families.id, { onDelete: 'cascade' })
     .notNull(),
   content: text('content').notNull(),
-  parentReplyId: uuid('parent_reply_id').references(() => forumReplies.id, { onDelete: 'set null' }), // For nested replies
+  parentReplyId: uuid('parent_reply_id').references(() => (forumReplies as any).id, { onDelete: 'set null' }), // For nested replies
   isAccepted: boolean('is_accepted').default(false).notNull(), // For Q&A style posts
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
