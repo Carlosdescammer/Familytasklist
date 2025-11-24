@@ -115,8 +115,10 @@ export async function POST(
       })
       .where(eq(forumPosts.id, params.id));
 
+    const reply = Array.isArray(newReply) ? newReply[0] : newReply;
+
     return NextResponse.json(
-      { reply: newReply[0], message: 'Reply created successfully' },
+      { reply, message: 'Reply created successfully' },
       { status: 201 }
     );
   } catch (error) {

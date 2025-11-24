@@ -129,8 +129,10 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    const post = Array.isArray(newPost) ? newPost[0] : newPost;
+
     return NextResponse.json(
-      { post: newPost[0], message: 'Post created successfully' },
+      { post, message: 'Post created successfully' },
       { status: 201 }
     );
   } catch (error) {

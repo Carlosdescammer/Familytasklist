@@ -48,8 +48,10 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    const category = Array.isArray(newCategory) ? newCategory[0] : newCategory;
+
     return NextResponse.json(
-      { category: newCategory[0], message: 'Category created successfully' },
+      { category, message: 'Category created successfully' },
       { status: 201 }
     );
   } catch (error) {

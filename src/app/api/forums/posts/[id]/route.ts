@@ -78,12 +78,14 @@ export async function PATCH(
       .where(eq(forumPosts.id, params.id))
       .returning();
 
-    if (!updatedPost.length) {
+    const postArray = Array.isArray(updatedPost) ? updatedPost : [updatedPost];
+
+    if (!postArray.length) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
     return NextResponse.json({
-      post: updatedPost[0],
+      post: postArray[0],
       message: 'Post updated successfully',
     });
   } catch (error) {
