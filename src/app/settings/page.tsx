@@ -98,6 +98,25 @@ export default function SettingsPage() {
   // Calendar token state
   const [calendarToken, setCalendarToken] = useState<string>('');
 
+  const fetchCalendarToken = useCallback(async () => {
+    if (!user?.familyId) return;
+
+    try {
+      const res = await fetch('/api/calendar/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ familyId: user.familyId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCalendarToken(data.token);
+      }
+    } catch (error) {
+      console.error('Error fetching calendar token:', error);
+    }
+  }, [user?.familyId]);
+
   useEffect(() => {
     fetchFamily();
     fetchAiUsageStats();
@@ -158,25 +177,6 @@ export default function SettingsPage() {
       setLoadingPreferences(false);
     }
   };
-
-  const fetchCalendarToken = useCallback(async () => {
-    if (!user?.familyId) return;
-
-    try {
-      const res = await fetch('/api/calendar/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ familyId: user.familyId }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setCalendarToken(data.token);
-      }
-    } catch (error) {
-      console.error('Error fetching calendar token:', error);
-    }
-  }, [user?.familyId]);
 
   const handleSaveNotificationPreferences = async () => {
     try {
