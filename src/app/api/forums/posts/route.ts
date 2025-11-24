@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { forumPosts } from '@/db/schema';
-import { desc, eq, and, sql } from 'drizzle-orm';
+import { desc, eq, and, sql, like, or } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 
@@ -14,64 +14,70 @@ const createPostSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-// GET - Fetch forum posts (with optional category filter)
+// GET - Fetch forum posts (with optional category filter and search)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const categoryId = searchParams.get('categoryId');
+    const search = searchParams.get('search');
+    const sortBy = searchParams.get('sortBy') || 'activity';
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    let posts;
-
+    // Build where conditions dynamically
+    const conditions = [];
     if (categoryId) {
-      posts = await db.query.forumPosts.findMany({
-        where: eq(forumPosts.categoryId, categoryId),
-        with: {
-          author: {
-            columns: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          category: true,
-          lastReplyByUser: {
-            columns: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: [desc(forumPosts.isPinned), desc(forumPosts.lastReplyAt), desc(forumPosts.createdAt)],
-        limit,
-        offset,
-      });
-    } else {
-      posts = await db.query.forumPosts.findMany({
-        with: {
-          author: {
-            columns: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          category: true,
-          lastReplyByUser: {
-            columns: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: [desc(forumPosts.isPinned), desc(forumPosts.lastReplyAt), desc(forumPosts.createdAt)],
-        limit,
-        offset,
-      });
+      conditions.push(eq(forumPosts.categoryId, categoryId));
     }
+    if (search) {
+      const searchPattern = `%${search}%`;
+      conditions.push(
+        or(
+          like(forumPosts.title, searchPattern),
+          like(forumPosts.content, searchPattern)
+        )
+      );
+    }
+
+    // Determine orderBy based on sortBy parameter
+    let orderBy;
+    switch (sortBy) {
+      case 'newest':
+        orderBy = [desc(forumPosts.isPinned), desc(forumPosts.createdAt)];
+        break;
+      case 'replies':
+        orderBy = [desc(forumPosts.isPinned), desc(forumPosts.replyCount), desc(forumPosts.createdAt)];
+        break;
+      case 'views':
+        orderBy = [desc(forumPosts.isPinned), desc(forumPosts.viewCount), desc(forumPosts.createdAt)];
+        break;
+      default: // 'activity'
+        orderBy = [desc(forumPosts.isPinned), desc(forumPosts.lastReplyAt), desc(forumPosts.createdAt)];
+    }
+
+    const posts = await db.query.forumPosts.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: {
+        author: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        category: true,
+        lastReplyByUser: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy,
+      limit,
+      offset,
+    });
 
     return NextResponse.json({ posts });
   } catch (error) {

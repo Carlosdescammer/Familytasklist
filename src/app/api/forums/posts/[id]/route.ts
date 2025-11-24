@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { forumPosts } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,14 +64,52 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user from database
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.clerkId, userId),
+      columns: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if post exists and user is the author
+    const existingPost = await db.query.forumPosts.findFirst({
+      where: eq(forumPosts.id, params.id),
+      columns: {
+        id: true,
+        authorId: true,
+      },
+    });
+
+    if (!existingPost) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    if (existingPost.authorId !== user.id) {
+      return NextResponse.json(
+        { error: 'You can only edit your own posts' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { title, content, isPinned, isLocked } = body;
 
     const updates: any = {};
     if (title !== undefined) updates.title = title;
     if (content !== undefined) updates.content = content;
-    if (isPinned !== undefined) updates.isPinned = isPinned;
-    if (isLocked !== undefined) updates.isLocked = isLocked;
+    // Only allow admin to pin/lock (for now, just ignore these fields for regular users)
+    // if (isPinned !== undefined) updates.isPinned = isPinned;
+    // if (isLocked !== undefined) updates.isLocked = isLocked;
 
     const updatedPost = await db
       .update(forumPosts)
@@ -79,10 +118,6 @@ export async function PATCH(
       .returning();
 
     const postArray = Array.isArray(updatedPost) ? updatedPost : [updatedPost];
-
-    if (!postArray.length) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-    }
 
     return NextResponse.json({
       post: postArray[0],
@@ -103,14 +138,47 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user from database
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.clerkId, userId),
+      columns: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if post exists and user is the author
+    const existingPost = await db.query.forumPosts.findFirst({
+      where: eq(forumPosts.id, params.id),
+      columns: {
+        id: true,
+        authorId: true,
+      },
+    });
+
+    if (!existingPost) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    if (existingPost.authorId !== user.id) {
+      return NextResponse.json(
+        { error: 'You can only delete your own posts' },
+        { status: 403 }
+      );
+    }
+
     const deletedPost = await db
       .delete(forumPosts)
       .where(eq(forumPosts.id, params.id))
       .returning();
-
-    if (!deletedPost.length) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-    }
 
     return NextResponse.json({ message: 'Post deleted successfully' });
   } catch (error) {

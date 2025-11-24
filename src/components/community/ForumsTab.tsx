@@ -27,6 +27,9 @@ import {
   IconLock,
   IconSend,
   IconChevronRight,
+  IconSearch,
+  IconEdit,
+  IconTrash,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
@@ -81,6 +84,8 @@ export default function ForumsTab() {
   const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<string>('activity');
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [viewModalOpened, setViewModalOpened] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
@@ -109,9 +114,12 @@ export default function ForumsTab() {
 
   const fetchPosts = useCallback(async () => {
     try {
-      const url = selectedCategory
-        ? `/api/forums/posts?categoryId=${selectedCategory}`
-        : '/api/forums/posts';
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('categoryId', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      if (sortBy) params.append('sortBy', sortBy);
+
+      const url = `/api/forums/posts${params.toString() ? `?${params.toString()}` : ''}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.posts) {
@@ -120,7 +128,7 @@ export default function ForumsTab() {
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery, sortBy]);
 
   useEffect(() => {
     fetchCategories();
@@ -246,6 +254,31 @@ export default function ForumsTab() {
           New Discussion
         </Button>
       </Group>
+
+      {/* Search and Sort */}
+      <Grid>
+        <Grid.Col span={{ base: 12, sm: 8 }}>
+          <TextInput
+            placeholder="Search discussions..."
+            leftSection={<IconSearch size={16} />}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, sm: 4 }}>
+          <Select
+            placeholder="Sort by"
+            value={sortBy}
+            onChange={(value) => setSortBy(value || 'activity')}
+            data={[
+              { value: 'activity', label: 'Recent Activity' },
+              { value: 'newest', label: 'Newest First' },
+              { value: 'replies', label: 'Most Replies' },
+              { value: 'views', label: 'Most Views' },
+            ]}
+          />
+        </Grid.Col>
+      </Grid>
 
       {/* Category Filter */}
       {categories.length > 0 && (
