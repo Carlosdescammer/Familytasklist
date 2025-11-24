@@ -380,7 +380,7 @@ export const forumReplies = pgTable('forum_replies', {
     .references(() => families.id, { onDelete: 'cascade' })
     .notNull(),
   content: text('content').notNull(),
-  parentReplyId: uuid('parent_reply_id').references(() => (forumReplies as any).id, { onDelete: 'set null' }), // For nested replies
+  parentReplyId: uuid('parent_reply_id'), // For nested replies - self-reference handled by migration SQL
   isAccepted: boolean('is_accepted').default(false).notNull(), // For Q&A style posts
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
