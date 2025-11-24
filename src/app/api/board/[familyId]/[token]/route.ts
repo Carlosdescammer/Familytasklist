@@ -82,14 +82,20 @@ export async function GET(
         },
       });
 
-      boardData.tasks = incompleteTasks.map((task) => ({
-        id: task.id,
-        title: task.title,
-        completed: task.completed,
-        priority: task.priority,
-        dueDate: task.dueDate,
-        assigneeName: task.assignedUser?.name || 'Unassigned',
-      }));
+      boardData.tasks = incompleteTasks.map((task) => {
+        const assignedUser = Array.isArray(task.assignedUser)
+          ? task.assignedUser[0]
+          : task.assignedUser;
+
+        return {
+          id: task.id,
+          title: task.title,
+          completed: task.completed,
+          priority: task.priority,
+          dueDate: task.dueDate,
+          assigneeName: assignedUser?.name || 'Unassigned',
+        };
+      });
     }
 
     if (widgets.includes('shopping')) {

@@ -21,6 +21,7 @@ import {
   Button,
   Select,
   SegmentedControl,
+  Card,
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import {
@@ -337,26 +338,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     <ScrollArea h={isMobile ? 300 : 400}>
                       <Stack gap="xs">
                         {filteredNotifications.map((notification) => (
-                          <div
+                          <Card
                             key={notification.id}
                             onClick={() => handleNotificationClick(notification)}
+                            p="md"
+                            withBorder
+                            bg={notification.read ? undefined : 'blue.0'}
                             style={{
-                              padding: '12px',
-                              borderRadius: '8px',
-                              backgroundColor: notification.read
-                                ? 'transparent'
-                                : 'var(--mantine-color-blue-0)',
-                              border: '1px solid var(--mantine-color-gray-3)',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = 'translateY(-2px)';
-                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.transform = 'translateY(0)';
-                              e.currentTarget.style.boxShadow = 'none';
                             }}
                           >
                             <Group justify="space-between" align="flex-start" mb="xs">
@@ -375,7 +371,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                             <Text size="xs" c="dimmed" mt="xs">
                               {new Date(notification.createdAt).toLocaleString()}
                             </Text>
-                          </div>
+                          </Card>
                         ))}
                       </Stack>
                     </ScrollArea>
