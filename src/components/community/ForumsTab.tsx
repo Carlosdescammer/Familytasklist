@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Stack,
   Card,
@@ -95,11 +95,6 @@ export default function ForumsTab() {
   const [newReply, setNewReply] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-    fetchPosts();
-  }, [selectedCategory]);
-
   const fetchCategories = async () => {
     try {
       const res = await fetch('/api/forums/categories');
@@ -112,7 +107,7 @@ export default function ForumsTab() {
     }
   };
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const url = selectedCategory
         ? `/api/forums/posts?categoryId=${selectedCategory}`
@@ -125,7 +120,12 @@ export default function ForumsTab() {
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
-  };
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleCreatePost = async () => {
     if (!newPostTitle.trim() || !newPostContent.trim() || !newPostCategory) {

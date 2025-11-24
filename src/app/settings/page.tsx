@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Title,
   Stack,
@@ -105,7 +105,7 @@ export default function SettingsPage() {
     if (user?.familyId) {
       fetchCalendarToken();
     }
-  }, [user?.familyId]);
+  }, [user?.familyId, fetchCalendarToken]);
 
   const fetchFamily = async () => {
     try {
@@ -159,7 +159,7 @@ export default function SettingsPage() {
     }
   };
 
-  const fetchCalendarToken = async () => {
+  const fetchCalendarToken = useCallback(async () => {
     if (!user?.familyId) return;
 
     try {
@@ -176,7 +176,7 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error fetching calendar token:', error);
     }
-  };
+  }, [user?.familyId]);
 
   const handleSaveNotificationPreferences = async () => {
     try {
