@@ -30,14 +30,17 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      families: memberships.map((m) => ({
-        id: m.family.id,
-        name: m.family.name,
-        roleInFamily: m.roleInFamily,
-        isAdmin: m.isAdmin,
-        joinedAt: m.joinedAt,
-        isActive: m.familyId === user?.activeFamilyId,
-      })),
+      families: memberships.map((m) => {
+        const family = Array.isArray(m.family) ? m.family[0] : m.family;
+        return {
+          id: family.id,
+          name: family.name,
+          roleInFamily: m.roleInFamily,
+          isAdmin: m.isAdmin,
+          joinedAt: m.joinedAt,
+          isActive: m.familyId === user?.activeFamilyId,
+        };
+      }),
       activeFamilyId: user?.activeFamilyId || user?.familyId,
     });
   } catch (error) {
