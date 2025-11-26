@@ -345,10 +345,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                             onClick={() => handleNotificationClick(notification)}
                             p="md"
                             withBorder
-                            bg={notification.read ? undefined : 'blue.0'}
                             style={{
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
+                              borderLeft: !notification.read ? '3px solid var(--mantine-color-blue-6)' : undefined,
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = 'translateY(-2px)';
@@ -358,7 +358,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                             }}
                           >
                             <Group justify="space-between" align="flex-start" mb="xs">
-                              <Text fw={500} size="sm">
+                              <Text fw={!notification.read ? 600 : 500} size="sm">
                                 {notification.title}
                               </Text>
                               {!notification.read && (
@@ -367,10 +367,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                                 </Badge>
                               )}
                             </Group>
-                            <Text size="xs" c="dimmed">
+                            <Text size="xs" opacity={0.8}>
                               {notification.message}
                             </Text>
-                            <Text size="xs" c="dimmed" mt="xs">
+                            <Text size="xs" opacity={0.6} mt="xs">
                               {new Date(notification.createdAt).toLocaleString()}
                             </Text>
                           </Card>
