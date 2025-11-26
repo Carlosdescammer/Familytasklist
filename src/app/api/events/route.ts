@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { events, users } from '@/db/schema';
+import { events, users, pushTokens } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { syncEventToGoogleCalendar } from '@/lib/google-calendar';
+import { createCalendarNotificationPayload, sendPushNotificationToMultiple } from '@/lib/web-push-server';
 
 const createEventSchema = z.object({
   title: z.string().min(1).max(200),
@@ -68,6 +69,47 @@ export async function POST(req: NextRequest) {
         createdBy: session.user.id,
       })
       .returning();
+
+    // Send push notification to other family members
+    try {
+      // Get push tokens for other family members (not the creator)
+      const familyTokens = await db.query.pushTokens.findMany({
+        where: and(
+          eq(pushTokens.isActive, true),
+          ne(pushTokens.userId, session.user.id)
+        ),
+        with: {
+          user: {
+            columns: {
+              familyId: true,
+            },
+          },
+        },
+      });
+
+      // Filter to only tokens belonging to users in the same family
+      const relevantTokens = familyTokens.filter(
+        (token: any) => token.user?.familyId === session.user.familyId
+      );
+
+      if (relevantTokens.length > 0) {
+        const subscriptions = relevantTokens.map((token) => JSON.parse(token.token));
+
+        const payload = createCalendarNotificationPayload(
+          event.title,
+          event.id,
+          new Date(event.startTime)
+        );
+
+        // Send notification asynchronously (don't wait for it)
+        sendPushNotificationToMultiple(subscriptions, payload).catch((error) => {
+          console.error('Error sending event notification:', error);
+        });
+      }
+    } catch (error) {
+      console.error('Error processing push notification for event:', error);
+      // Don't fail the request if notification fails
+    }
 
     // Try to sync to Google Calendar if user has OAuth tokens
     try {

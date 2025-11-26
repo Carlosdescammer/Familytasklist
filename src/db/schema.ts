@@ -398,6 +398,22 @@ export const forumReactions = pgTable('forum_reactions', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Push Tokens table - Store FCM tokens for push notifications
+export const pushTokens = pgTable('push_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  token: text('token').notNull().unique(), // FCM token
+  deviceType: text('device_type'), // 'web', 'android', 'ios'
+  deviceName: text('device_name'), // Browser/device identifier
+  userAgent: text('user_agent'), // Full user agent string
+  isActive: boolean('is_active').default(true).notNull(), // Track if token is still valid
+  lastUsed: timestamp('last_used', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Relations
 export const familiesRelations = relations(families, ({ many }) => ({
   users: many(users, {
@@ -433,6 +449,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   assignedTasks: many(tasks),
   createdRecipes: many(recipes),
   uploadedPhotos: many(photos),
+  pushTokens: many(pushTokens),
 }));
 
 export const familyMembersRelations = relations(familyMembers, ({ one }) => ({
@@ -670,6 +687,13 @@ export const forumReactionsRelations = relations(forumReactions, ({ one }) => ({
   }),
 }));
 
+export const pushTokensRelations = relations(pushTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [pushTokens.userId],
+    references: [users.id],
+  }),
+}));
+
 // NextAuth.js adapter tables (required by @auth/drizzle-adapter)
 export const authUsers = pgTable('user', {
   id: text('id').notNull().primaryKey(),
@@ -764,3 +788,5 @@ export type ForumReply = typeof forumReplies.$inferSelect;
 export type NewForumReply = typeof forumReplies.$inferInsert;
 export type ForumReaction = typeof forumReactions.$inferSelect;
 export type NewForumReaction = typeof forumReactions.$inferInsert;
+export type PushToken = typeof pushTokens.$inferSelect;
+export type NewPushToken = typeof pushTokens.$inferInsert;

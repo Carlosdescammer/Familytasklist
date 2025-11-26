@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { shoppingItems, shoppingLists, families } from '@/db/schema';
+import { shoppingItems, shoppingLists, families, pushTokens, users } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { decrypt } from '@/lib/encryption';
 import { analyzeShoppingItem } from '@/lib/gemini';
+import { createShoppingNotificationPayload, sendPushNotificationToMultiple } from '@/lib/web-push-server';
 
 const createShoppingItemSchema = z.object({
   name: z.string().min(1).max(200),
@@ -41,6 +42,48 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         addedBy: session.user.id,
       })
       .returning();
+
+    // Send push notification to other family members
+    try {
+      // Get push tokens for other family members (not the person who added the item)
+      const familyTokens = await db.query.pushTokens.findMany({
+        where: and(
+          eq(pushTokens.isActive, true),
+          ne(pushTokens.userId, session.user.id)
+        ),
+        with: {
+          user: {
+            columns: {
+              familyId: true,
+            },
+          },
+        },
+      });
+
+      // Filter to only tokens belonging to users in the same family
+      const relevantTokens = familyTokens.filter(
+        (token: any) => token.user?.familyId === session.user.familyId
+      );
+
+      if (relevantTokens.length > 0) {
+        const subscriptions = relevantTokens.map((token) => JSON.parse(token.token));
+        const adderName = session.user.name || session.user.email || 'Someone';
+
+        const payload = createShoppingNotificationPayload(
+          data.name,
+          params.id,
+          adderName
+        );
+
+        // Send notification asynchronously (don't wait for it)
+        sendPushNotificationToMultiple(subscriptions, payload).catch((error) => {
+          console.error('Error sending shopping notification:', error);
+        });
+      }
+    } catch (error) {
+      console.error('Error processing push notification for shopping item:', error);
+      // Don't fail the request if notification fails
+    }
 
     // Try to analyze with AI in the background (don't block the response)
     // This runs asynchronously after returning the item

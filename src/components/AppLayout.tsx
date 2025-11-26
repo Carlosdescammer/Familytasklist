@@ -47,6 +47,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { canAccessPage, type PageName } from '@/lib/page-access';
 import { FamilySwitcher } from '@/components/FamilySwitcher';
+import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: IconHome, pageName: null }, // Dashboard has no restrictions
@@ -435,7 +436,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           ))}
       </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main>
+        <Stack gap="md">
+          <PushNotificationPrompt />
+          {children}
+        </Stack>
+      </AppShell.Main>
     </AppShell>
   );
 }
