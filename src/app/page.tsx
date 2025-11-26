@@ -402,14 +402,14 @@ export default function Dashboard() {
               <Grid>
                 {completedTasks.slice(0, 3).map((task: any) => (
                   <Grid.Col key={task.id} span={{ base: 12, sm: 6, md: 4 }}>
-                    <Card padding="sm" radius="md" withBorder style={{ background: '#f8f9fa' }}>
+                    <Card padding="sm" radius="md" withBorder>
                       <Group gap="xs" mb="xs">
-                        <IconCheck size={20} color="green" />
+                        <IconCheck size={20} style={{ color: 'var(--mantine-color-green-6)' }} />
                         <Text size="sm" fw={500} lineClamp={1}>
                           {task.title}
                         </Text>
                       </Group>
-                      <Text size="xs" c="dimmed">
+                      <Text size="xs" fw={500} c="green">
                         Earned {userProfile?.pointsPerTask || 10} Family Bucks!
                       </Text>
                     </Card>
