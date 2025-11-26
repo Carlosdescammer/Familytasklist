@@ -31,38 +31,54 @@
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Shopping List",
+      "name": "Add Task",
+      "short_name": "New Task",
+      "description": "Quickly add a new task to your family list",
+      "url": "/tasks?action=new",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "View Shopping List",
       "short_name": "Shopping",
-      "description": "View and manage shopping lists",
+      "description": "View and manage your family shopping lists",
       "url": "/shopping",
       "icons": [
         {
           "src": "/icon-192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     },
     {
-      "name": "Calendar",
+      "name": "View Calendar",
       "short_name": "Calendar",
-      "description": "View family calendar",
+      "description": "View your family calendar and upcoming events",
       "url": "/calendar",
       "icons": [
         {
           "src": "/icon-192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     },
     {
-      "name": "Tasks",
-      "short_name": "Tasks",
-      "description": "Manage family tasks",
-      "url": "/tasks",
+      "name": "Add Recipe",
+      "short_name": "New Recipe",
+      "description": "Add a new recipe to your family collection",
+      "url": "/recipes?action=new",
       "icons": [
         {
           "src": "/icon-192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }

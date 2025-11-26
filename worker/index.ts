@@ -100,6 +100,152 @@ self.addEventListener('sync', (event: any) => {
   }
 });
 
+// ===== PERIODIC BACKGROUND SYNC =====
+// Handle periodic background sync events
+self.addEventListener('periodicsync', (event: any) => {
+  console.log('[Service Worker] Periodic background sync event:', event.tag);
+
+  switch (event.tag) {
+    case 'sync-tasks':
+      event.waitUntil(syncTasks());
+      break;
+    case 'sync-calendar':
+      event.waitUntil(syncCalendar());
+      break;
+    case 'sync-shopping':
+      event.waitUntil(syncShopping());
+      break;
+    case 'sync-notifications':
+      event.waitUntil(syncNotifications());
+      break;
+    default:
+      console.log(`[Service Worker] Unknown periodic sync tag: ${event.tag}`);
+  }
+});
+
+// Periodic sync functions
+async function syncTasks() {
+  try {
+    console.log('[Service Worker] Syncing tasks...');
+
+    const response = await fetch('/api/tasks', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const pendingCount = data.tasks?.filter((task: any) => !task.completed).length || 0;
+
+      // Update badge count
+      if ('setAppBadge' in navigator) {
+        await (navigator as any).setAppBadge(pendingCount);
+      }
+
+      console.log(`[Service Worker] Tasks synced successfully. Pending tasks: ${pendingCount}`);
+    } else {
+      console.error('[Service Worker] Failed to sync tasks:', response.statusText);
+    }
+  } catch (error) {
+    console.error('[Service Worker] Error syncing tasks:', error);
+  }
+}
+
+async function syncCalendar() {
+  try {
+    console.log('[Service Worker] Syncing calendar...');
+
+    const today = new Date().toISOString();
+    const response = await fetch(`/api/events?from=${today}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`[Service Worker] Calendar synced successfully. Upcoming events: ${data.events?.length || 0}`);
+
+      // Check for events happening soon (next hour)
+      const nowTime = Date.now();
+      const oneHourFromNow = nowTime + (60 * 60 * 1000);
+      const upcomingEvents = data.events?.filter((event: any) => {
+        const eventTime = new Date(event.startTime).getTime();
+        return eventTime >= nowTime && eventTime <= oneHourFromNow;
+      }) || [];
+
+      if (upcomingEvents.length > 0) {
+        await self.registration.showNotification('Upcoming Events', {
+          body: `You have ${upcomingEvents.length} event(s) in the next hour`,
+          icon: '/icon-192.png',
+          tag: 'upcoming-events',
+          data: { url: '/calendar' },
+        });
+      }
+    } else {
+      console.error('[Service Worker] Failed to sync calendar:', response.statusText);
+    }
+  } catch (error) {
+    console.error('[Service Worker] Error syncing calendar:', error);
+  }
+}
+
+async function syncShopping() {
+  try {
+    console.log('[Service Worker] Syncing shopping lists...');
+
+    const response = await fetch('/api/shopping', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const activeItems = data.items?.filter((item: any) => !item.purchased).length || 0;
+
+      console.log(`[Service Worker] Shopping lists synced successfully. Active items: ${activeItems}`);
+    } else {
+      console.error('[Service Worker] Failed to sync shopping lists:', response.statusText);
+    }
+  } catch (error) {
+    console.error('[Service Worker] Error syncing shopping lists:', error);
+  }
+}
+
+async function syncNotifications() {
+  try {
+    console.log('[Service Worker] Syncing notifications...');
+
+    const response = await fetch('/api/notifications', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const unreadCount = data.notifications?.filter((notif: any) => !notif.read).length || 0;
+
+      // Update badge count with unread notifications
+      if ('setAppBadge' in navigator && unreadCount > 0) {
+        await (navigator as any).setAppBadge(unreadCount);
+      }
+
+      console.log(`[Service Worker] Notifications synced successfully. Unread: ${unreadCount}`);
+    } else {
+      console.error('[Service Worker] Failed to sync notifications:', response.statusText);
+    }
+  } catch (error) {
+    console.error('[Service Worker] Error syncing notifications:', error);
+  }
+}
+
 async function syncQueuedRequests() {
   try {
     // Open the IndexedDB
