@@ -48,6 +48,7 @@ import Link from 'next/link';
 import { canAccessPage, type PageName } from '@/lib/page-access';
 import { FamilySwitcher } from '@/components/FamilySwitcher';
 import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: IconHome, pageName: null }, // Dashboard has no restrictions
@@ -439,6 +440,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <AppShell.Main>
         <Stack gap="md">
           <PushNotificationPrompt />
+          <OfflineIndicator />
           {children}
         </Stack>
       </AppShell.Main>
