@@ -4,6 +4,7 @@ import { tasks, users, notifications } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
 import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { createNotification } from '@/lib/notifications';
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -107,6 +108,32 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         );
       }
 
+      // Get all parents and family members
+      const familyMembers = await db.query.users.findMany({
+        where: eq(users.familyId, session.user.familyId),
+      });
+
+      // Get the child's name for the notification message
+      const childName = assignedUser?.name || assignedUser?.email || 'A family member';
+      const parentsToNotify = familyMembers.filter((member) => member.role === 'parent');
+
+      // Send single task completion notification to all parents
+      for (const parent of parentsToNotify) {
+        await createNotification({
+          familyId: session.user.familyId,
+          userId: parent.id,
+          type: 'task_completed',
+          title: `Task Completed: ${updatedTask.title}`,
+          message: `${childName} has completed the task: "${updatedTask.title}"`,
+          relatedUserId: updatedTask.assignedTo,
+          relatedTaskId: updatedTask.id,
+        });
+      }
+
+      console.log(
+        `Sent task completion notifications to ${parentsToNotify.length} parent(s) for task: ${updatedTask.title}`
+      );
+
       // Check if ALL tasks assigned to this user are now completed
       const allUserTasks = await db.query.tasks.findMany({
         where: and(
@@ -118,19 +145,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       const allTasksComplete = allUserTasks.every((task) => task.completed);
 
       if (allTasksComplete && allUserTasks.length > 0) {
-        // Get all parents and family members who should be notified
-        const familyMembers = await db.query.users.findMany({
-          where: eq(users.familyId, session.user.familyId),
-        });
-
-        // Get the child's name for the notification message
-        const childName = assignedUser?.name || assignedUser?.email || 'Your child';
-
-        // Create notifications for all parents
-        const parentsToNotify = familyMembers.filter((member) => member.role === 'parent');
-
+        // Create notifications for all parents about ALL tasks being complete
         for (const parent of parentsToNotify) {
-          await db.insert(notifications).values({
+          await createNotification({
             familyId: session.user.familyId,
             userId: parent.id,
             type: 'all_tasks_complete',
@@ -142,7 +159,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         }
 
         console.log(
-          `Created notifications for ${parentsToNotify.length} parent(s) - ${childName} completed all tasks`
+          `Sent all-tasks-complete notifications to ${parentsToNotify.length} parent(s) - ${childName} completed all tasks`
         );
       }
     }
