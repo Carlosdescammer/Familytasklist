@@ -1,23 +1,39 @@
 // Server-side Web Push utilities using the web-push library
 import webpush from 'web-push';
 
-// Initialize web-push with VAPID keys
+// Track initialization state
+let isInitialized = false;
+let initializationAttempted = false;
+
+// Initialize web-push with VAPID keys (lazy initialization)
 function initializeWebPush() {
+  // Only attempt initialization once
+  if (initializationAttempted) {
+    return isInitialized;
+  }
+
+  initializationAttempted = true;
+
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
   const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@familylist.app';
 
   if (!vapidPublicKey || !vapidPrivateKey) {
     console.warn('VAPID keys not configured');
+    isInitialized = false;
     return false;
   }
 
-  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-  return true;
+  try {
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+    isInitialized = true;
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize Web Push:', error);
+    isInitialized = false;
+    return false;
+  }
 }
-
-// Initialize on module load
-const isInitialized = initializeWebPush();
 
 export interface PushNotificationPayload {
   title: string;
@@ -44,7 +60,8 @@ export async function sendPushNotification(
   subscription: PushSubscriptionJSON,
   payload: PushNotificationPayload
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isInitialized) {
+  // Lazy initialization
+  if (!initializeWebPush()) {
     return {
       success: false,
       error: 'Web Push not initialized - VAPID keys missing',
@@ -86,7 +103,8 @@ export async function sendPushNotificationToMultiple(
   failureCount: number;
   expiredSubscriptions: PushSubscriptionJSON[];
 }> {
-  if (!isInitialized) {
+  // Lazy initialization
+  if (!initializeWebPush()) {
     return {
       successCount: 0,
       failureCount: subscriptions.length,
