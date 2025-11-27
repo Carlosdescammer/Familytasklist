@@ -166,13 +166,21 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
     if (!selectedNote) return;
 
     try {
+      // Get user's public key
+      const publicKey = await encryption.getPublicKey();
+      if (!publicKey) {
+        throw new Error('No public key found');
+      }
+
+      // Encrypt new content
+      const payload = await encryption.encryptForFamily(editContent, {
+        [userId]: publicKey,
+      });
+
       // Delete old note and create new one (since content is encrypted)
       await fetch(`/api/notes/encrypted/${selectedNote.id}`, {
         method: 'DELETE',
       });
-
-      // Encrypt new content
-      const payload = await encryption.encryptForFamily(editContent, {});
 
       // Create new note
       await fetch('/api/notes/encrypted', {
@@ -181,7 +189,7 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
         body: JSON.stringify({
           familyId,
           encryptedContent: payload.encryptedData,
-          encryptedKey: Object.values(payload.encryptedKeys)[0],
+          encryptedKey: payload.encryptedKeys[userId],
           iv: payload.iv,
           noteType: editType,
           title: editTitle || null,
@@ -200,6 +208,7 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
       setSelectedNote(null);
       fetchNotes();
     } catch (error) {
+      console.error('Error saving note:', error);
       notifications.show({
         title: 'Error',
         message: 'Failed to update note',
