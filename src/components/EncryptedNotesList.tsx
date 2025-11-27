@@ -68,8 +68,7 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [retryCount, setRetryCount] = useState(0);
-  const [viewModalOpened, setViewModalOpened] = useState(false);
-  const [editModalOpened, setEditModalOpened] = useState(false);
+  const [editorOpened, setEditorOpened] = useState(false);
   const [selectedNote, setSelectedNote] = useState<DecryptedNote | null>(null);
   const [editContent, setEditContent] = useState('');
   const [editTitle, setEditTitle] = useState('');
@@ -145,7 +144,8 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
     }
   }, [familyId, encryption.isUnlocked, encryption.isSetup, onRefresh, retryCount]);
 
-  const handleCopy = (content: string) => {
+  const handleCopy = (content: string, e?: React.MouseEvent) => {
+    e?.stopPropagation(); // Prevent opening editor
     navigator.clipboard.writeText(content);
     notifications.show({
       title: 'Copied',
@@ -154,17 +154,12 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
     });
   };
 
-  const handleView = (note: DecryptedNote) => {
-    setSelectedNote(note);
-    setViewModalOpened(true);
-  };
-
-  const handleEdit = (note: DecryptedNote) => {
+  const handleOpenEditor = (note: DecryptedNote) => {
     setSelectedNote(note);
     setEditContent(note.decryptedContent);
     setEditTitle(note.title || '');
     setEditType(note.noteType);
-    setEditModalOpened(true);
+    setEditorOpened(true);
   };
 
   const handleSaveEdit = async () => {
@@ -201,7 +196,8 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
         color: 'green',
       });
 
-      setEditModalOpened(false);
+      setEditorOpened(false);
+      setSelectedNote(null);
       fetchNotes();
     } catch (error) {
       notifications.show({
@@ -212,7 +208,23 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
     }
   };
 
-  const handleDelete = async (noteId: string) => {
+  const handleCloseEditor = () => {
+    // Auto-save on close if there are changes
+    if (selectedNote && (
+      editContent !== selectedNote.decryptedContent ||
+      editTitle !== (selectedNote.title || '') ||
+      editType !== selectedNote.noteType
+    )) {
+      handleSaveEdit();
+    } else {
+      setEditorOpened(false);
+      setSelectedNote(null);
+    }
+  };
+
+  const handleDelete = async (noteId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation(); // Prevent opening editor
+
     if (!confirm('Are you sure you want to delete this encrypted note? This action cannot be undone.')) {
       return;
     }
@@ -228,6 +240,8 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
         color: 'green',
       });
 
+      setEditorOpened(false);
+      setSelectedNote(null);
       fetchNotes();
     } catch (error) {
       notifications.show({
@@ -314,7 +328,14 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
         ) : (
           <Stack gap="sm">
             {filteredNotes.map((note) => (
-              <Card key={note.id} shadow="xs" padding="md" withBorder>
+              <Card
+                key={note.id}
+                shadow="xs"
+                padding="md"
+                withBorder
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleOpenEditor(note)}
+              >
                 <Group justify="space-between" align="flex-start">
                   <Stack gap={4} style={{ flex: 1 }}>
                     <Group gap="xs">
@@ -362,35 +383,27 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
 
                   <Menu shadow="md" width={200}>
                     <Menu.Target>
-                      <ActionIcon variant="subtle" color="gray">
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <IconDots size={16} />
                       </ActionIcon>
                     </Menu.Target>
 
                     <Menu.Dropdown>
                       <Menu.Item
-                        leftSection={<IconEye size={14} />}
-                        onClick={() => handleView(note)}
-                      >
-                        View Full Note
-                      </Menu.Item>
-                      <Menu.Item
                         leftSection={<IconCopy size={14} />}
-                        onClick={() => handleCopy(note.decryptedContent)}
+                        onClick={(e) => handleCopy(note.decryptedContent, e as any)}
                       >
                         Copy Content
-                      </Menu.Item>
-                      <Menu.Item
-                        leftSection={<IconEdit size={14} />}
-                        onClick={() => handleEdit(note)}
-                      >
-                        Edit
                       </Menu.Item>
                       <Menu.Divider />
                       <Menu.Item
                         color="red"
                         leftSection={<IconTrash size={14} />}
-                        onClick={() => handleDelete(note.id)}
+                        onClick={(e) => handleDelete(note.id, e as any)}
                       >
                         Delete
                       </Menu.Item>
@@ -403,113 +416,129 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
         )}
       </ScrollArea>
 
-      {/* View Modal */}
+      {/* Apple Notes-Style Full Editor */}
       <Modal
-        opened={viewModalOpened}
-        onClose={() => setViewModalOpened(false)}
-        title={
-          <Group gap="xs">
-            <IconLock size={18} />
-            <Text fw={600}>{selectedNote?.title || 'Encrypted Note'}</Text>
-          </Group>
-        }
-        size="lg"
+        opened={editorOpened}
+        onClose={handleCloseEditor}
+        size="100%"
+        padding={0}
+        withCloseButton={false}
+        styles={{
+          body: { height: '100vh', padding: 0 },
+          content: { height: '100vh' },
+        }}
       >
-        <Stack gap="md">
-          <Group gap="xs">
-            <Badge
-              leftSection={NOTE_TYPE_EMOJI[selectedNote?.noteType || 'note']}
-              color={NOTE_TYPE_COLOR[selectedNote?.noteType || 'note'] || 'blue'}
-              variant="light"
-              size="sm"
-            >
-              {selectedNote?.noteType}
-            </Badge>
-            <Badge
-              leftSection={<IconLock size={10} />}
-              color="teal"
-              variant="outline"
-              size="xs"
-            >
-              Encrypted
-            </Badge>
-          </Group>
-
-          <Text
+        <Stack gap={0} h="100vh" style={{ backgroundColor: 'var(--mantine-color-body)' }}>
+          {/* Header Toolbar */}
+          <Group
+            justify="space-between"
+            p="md"
             style={{
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
+              borderBottom: '1px solid var(--mantine-color-default-border)',
+              backgroundColor: 'var(--mantine-color-body)',
             }}
           >
-            {selectedNote?.decryptedContent}
-          </Text>
+            <Group gap="xs">
+              <ActionIcon
+                variant="subtle"
+                size="lg"
+                onClick={handleCloseEditor}
+              >
+                <IconLock size={20} />
+              </ActionIcon>
+              <Text size="sm" c="dimmed">
+                {selectedNote && new Date(selectedNote.createdAt).toLocaleDateString()}
+              </Text>
+            </Group>
 
-          <Text size="xs" c="dimmed">
-            Created: {selectedNote && new Date(selectedNote.createdAt).toLocaleString()}
-          </Text>
-
-          <Group justify="flex-end">
-            <Button
-              variant="light"
-              leftSection={<IconCopy size={16} />}
-              onClick={() => {
-                if (selectedNote) {
-                  handleCopy(selectedNote.decryptedContent);
-                }
-              }}
-            >
-              Copy Content
-            </Button>
-            <Button onClick={() => setViewModalOpened(false)}>Close</Button>
+            <Group gap="xs">
+              <Select
+                value={editType}
+                onChange={(val) => setEditType(val || 'note')}
+                data={[
+                  { value: 'note', label: '📝 Note' },
+                  { value: 'password', label: '🔑 Password' },
+                  { value: 'personal', label: '👤 Personal' },
+                  { value: 'medical', label: '⚕️ Medical' },
+                  { value: 'financial', label: '💰 Financial' },
+                  { value: 'ideas', label: '💡 Ideas' },
+                  { value: 'diary', label: '📔 Diary' },
+                ]}
+                size="sm"
+                style={{ width: 150 }}
+              />
+              <ActionIcon
+                variant="light"
+                size="lg"
+                onClick={(e) => handleCopy(editContent, e as any)}
+              >
+                <IconCopy size={20} />
+              </ActionIcon>
+              <ActionIcon
+                variant="light"
+                color="red"
+                size="lg"
+                onClick={(e) => selectedNote && handleDelete(selectedNote.id, e as any)}
+              >
+                <IconTrash size={20} />
+              </ActionIcon>
+              <Button onClick={handleCloseEditor}>Done</Button>
+            </Group>
           </Group>
-        </Stack>
-      </Modal>
 
-      {/* Edit Modal */}
-      <Modal
-        opened={editModalOpened}
-        onClose={() => setEditModalOpened(false)}
-        title="Edit Encrypted Note"
-        size="lg"
-      >
-        <Stack gap="md">
-          <TextInput
-            label="Title (optional)"
-            placeholder="Note title..."
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-          />
+          {/* Editor Content */}
+          <ScrollArea h="calc(100vh - 70px)" p="xl" style={{ flex: 1 }}>
+            <Stack gap="lg" maw={800} mx="auto">
+              {/* Title Input - Apple Notes Style */}
+              <TextInput
+                placeholder="Title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                variant="unstyled"
+                size="xl"
+                styles={{
+                  input: {
+                    fontSize: '32px',
+                    fontWeight: 700,
+                    padding: 0,
+                  },
+                }}
+              />
 
-          <Select
-            label="Type"
-            value={editType}
-            onChange={(val) => setEditType(val || 'note')}
-            data={[
-              { value: 'note', label: '📝 Note' },
-              { value: 'password', label: '🔑 Password' },
-              { value: 'personal', label: '👤 Personal' },
-              { value: 'medical', label: '⚕️ Medical' },
-              { value: 'financial', label: '💰 Financial' },
-              { value: 'ideas', label: '💡 Ideas' },
-              { value: 'diary', label: '📔 Diary' },
-            ]}
-          />
+              {/* Content Textarea - Apple Notes Style */}
+              <Textarea
+                placeholder="Start typing..."
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                variant="unstyled"
+                autosize
+                minRows={20}
+                styles={{
+                  input: {
+                    fontSize: '16px',
+                    lineHeight: 1.6,
+                    padding: 0,
+                    border: 'none',
+                  },
+                }}
+              />
 
-          <Textarea
-            label="Content"
-            placeholder="Note content..."
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            minRows={6}
-            autosize
-          />
-
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={() => setEditModalOpened(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit}>Save Changes</Button>
-          </Group>
+              {/* Footer Info */}
+              <Group gap="xs" mt="xl">
+                <Badge
+                  leftSection={<IconLock size={10} />}
+                  color="teal"
+                  variant="outline"
+                  size="xs"
+                >
+                  End-to-end encrypted
+                </Badge>
+                <Text size="xs" c="dimmed">
+                  Last edited {selectedNote && new Date(selectedNote.updatedAt).toLocaleString()}
+                </Text>
+              </Group>
+            </Stack>
+          </ScrollArea>
         </Stack>
       </Modal>
     </Stack>
