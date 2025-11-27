@@ -15,7 +15,8 @@ import { useEncryption } from './useEncryption';
 const generateAutoPassphrase = (userId: string): string => {
   // Use userId + a constant salt to generate consistent passphrase
   // This way the same user always gets the same passphrase
-  const salt = 'familylist-e2ee-auto-2024';
+  // Salt includes uppercase, lowercase, numbers, and special characters to meet validation
+  const salt = 'FamilyList-E2EE-Auto-2024!';
   return `${userId}-${salt}`;
 };
 
