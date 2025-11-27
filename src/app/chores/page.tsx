@@ -31,6 +31,7 @@ import { ChoreCard } from '@/components/ChoreCard';
 import { ChoreAssignmentCard } from '@/components/ChoreAssignmentCard';
 import { PointsDisplay } from '@/components/PointsDisplay';
 import { notifications } from '@mantine/notifications';
+import AppLayout from '@/components/AppLayout';
 
 export default function ChoresPage() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -255,17 +256,19 @@ export default function ChoresPage() {
 
   if (userLoading || loading) {
     return (
-      <Container>
-        <Stack align="center" py="xl">
-          <Loader />
-          <Text>Loading chores...</Text>
-        </Stack>
-      </Container>
+      <AppLayout>
+        <Container>
+          <Stack align="center" py="xl">
+            <Loader />
+            <Text>Loading chores...</Text>
+          </Stack>
+        </Container>
+      </AppLayout>
     );
   }
 
   if (!user) {
-    return <Container>Please log in to view chores</Container>;
+    return <AppLayout><Container>Please log in to view chores</Container></AppLayout>;
   }
 
   const myAssignments = assignments.filter(
@@ -276,9 +279,10 @@ export default function ChoresPage() {
   );
 
   return (
-    <Container size="xl" py="xl">
-      <Stack gap="xl">
-        {/* Header */}
+    <AppLayout>
+      <Container size="xl" py="xl">
+        <Stack gap="xl">
+          {/* Header */}
         <Group justify="space-between">
           <div>
             <Title order={1}>Chores</Title>
@@ -529,5 +533,6 @@ export default function ChoresPage() {
         </Modal>
       </Stack>
     </Container>
+    </AppLayout>
   );
 }

@@ -38,6 +38,7 @@ import { PointsDisplay } from '@/components/PointsDisplay';
 import { Leaderboard } from '@/components/Leaderboard';
 import { AchievementBadge } from '@/components/AchievementBadge';
 import { notifications } from '@mantine/notifications';
+import AppLayout from '@/components/AppLayout';
 
 export default function RewardsPage() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -221,26 +222,29 @@ export default function RewardsPage() {
 
   if (userLoading || loading) {
     return (
-      <Container>
-        <Stack align="center" py="xl">
-          <Loader />
-          <Text>Loading rewards...</Text>
-        </Stack>
-      </Container>
+      <AppLayout>
+        <Container>
+          <Stack align="center" py="xl">
+            <Loader />
+            <Text>Loading rewards...</Text>
+          </Stack>
+        </Container>
+      </AppLayout>
     );
   }
 
   if (!user) {
-    return <Container>Please log in to view rewards</Container>;
+    return <AppLayout><Container>Please log in to view rewards</Container></AppLayout>;
   }
 
   const unlockedAchievements = achievements.filter((a) => a.unlocked);
   const lockedAchievements = achievements.filter((a) => !a.unlocked);
 
   return (
-    <Container size="xl" py="xl">
-      <Stack gap="xl">
-        {/* Header */}
+    <AppLayout>
+      <Container size="xl" py="xl">
+        <Stack gap="xl">
+          {/* Header */}
         <Group justify="space-between">
           <div>
             <Title order={1}>Rewards & Achievements</Title>
@@ -439,5 +443,6 @@ export default function RewardsPage() {
         </Modal>
       </Stack>
     </Container>
+    </AppLayout>
   );
 }

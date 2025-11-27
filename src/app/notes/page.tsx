@@ -12,6 +12,7 @@ import { IconLock, IconPlus, IconShieldLock } from '@tabler/icons-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { EncryptedNoteEditor } from '@/components/EncryptedNoteEditor';
 import { EncryptedNotesList } from '@/components/EncryptedNotesList';
+import AppLayout from '@/components/AppLayout';
 
 export default function NotesPage() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -19,28 +20,31 @@ export default function NotesPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   if (userLoading) {
-    return <Container>Loading...</Container>;
+    return <AppLayout><Container>Loading...</Container></AppLayout>;
   }
 
   if (!user) {
-    return <Container>Please log in to access encrypted notes</Container>;
+    return <AppLayout><Container>Please log in to access encrypted notes</Container></AppLayout>;
   }
 
   if (!user.familyId) {
     return (
-      <Container>
-        <Paper p="xl" withBorder>
-          <Stack align="center" gap="md">
-            <IconShieldLock size={48} />
-            <Text>Please join or create a family first</Text>
-          </Stack>
-        </Paper>
-      </Container>
+      <AppLayout>
+        <Container>
+          <Paper p="xl" withBorder>
+            <Stack align="center" gap="md">
+              <IconShieldLock size={48} />
+              <Text>Please join or create a family first</Text>
+            </Stack>
+          </Paper>
+        </Container>
+      </AppLayout>
     );
   }
 
   return (
-    <Container size="md" py="xl">
+    <AppLayout>
+      <Container size="md" py="xl">
       <Stack gap="xl">
         {/* Header */}
         <Group justify="space-between">
@@ -99,5 +103,6 @@ export default function NotesPage() {
         />
       </Stack>
     </Container>
+    </AppLayout>
   );
 }

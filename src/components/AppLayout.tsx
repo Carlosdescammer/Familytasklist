@@ -458,29 +458,86 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </AppShell.Header>
 
       <AppShell.Navbar p="md">
-        {navItems
-          .filter((item) => {
-            // Dashboard is always accessible
-            if (item.pageName === null) return true;
+        <Stack gap="xs">
+          {/* Main Section */}
+          {navItems
+            .filter((item) => {
+              if (item.pageName === null) return true;
+              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+            })
+            .filter((item) => ['/', '/calendar', '/shopping'].includes(item.href))
+            .map((item) => (
+              <NavLink
+                key={item.href}
+                component={Link}
+                href={item.href}
+                label={item.label}
+                leftSection={<item.icon size={20} />}
+                active={pathname === item.href}
+                onClick={() => opened && toggle()}
+              />
+            ))}
 
-            // Check if user has access to this page
-            return canAccessPage(
-              user?.role,
-              user?.allowedPages,
-              item.pageName
-            );
-          })
-          .map((item) => (
-            <NavLink
-              key={item.href}
-              component={Link}
-              href={item.href}
-              label={item.label}
-              leftSection={<item.icon size={20} />}
-              active={pathname === item.href}
-              onClick={() => opened && toggle()}
-            />
-          ))}
+          {/* Tasks & Rewards Section */}
+          <Divider label="Tasks & Rewards" labelPosition="center" mt="md" mb="xs" />
+          {navItems
+            .filter((item) => {
+              if (item.pageName === null) return true;
+              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+            })
+            .filter((item) => ['/tasks', '/chores', '/rewards'].includes(item.href))
+            .map((item) => (
+              <NavLink
+                key={item.href}
+                component={Link}
+                href={item.href}
+                label={item.label}
+                leftSection={<item.icon size={20} />}
+                active={pathname === item.href}
+                onClick={() => opened && toggle()}
+              />
+            ))}
+
+          {/* Family Content Section */}
+          <Divider label="Family" labelPosition="center" mt="md" mb="xs" />
+          {navItems
+            .filter((item) => {
+              if (item.pageName === null) return true;
+              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+            })
+            .filter((item) => ['/recipes', '/photos', '/notes', '/community'].includes(item.href))
+            .map((item) => (
+              <NavLink
+                key={item.href}
+                component={Link}
+                href={item.href}
+                label={item.label}
+                leftSection={<item.icon size={20} />}
+                active={pathname === item.href}
+                onClick={() => opened && toggle()}
+              />
+            ))}
+
+          {/* Finance & Settings Section */}
+          <Divider label="More" labelPosition="center" mt="md" mb="xs" />
+          {navItems
+            .filter((item) => {
+              if (item.pageName === null) return true;
+              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+            })
+            .filter((item) => ['/budget', '/family', '/settings'].includes(item.href))
+            .map((item) => (
+              <NavLink
+                key={item.href}
+                component={Link}
+                href={item.href}
+                label={item.label}
+                leftSection={<item.icon size={20} />}
+                active={pathname === item.href}
+                onClick={() => opened && toggle()}
+              />
+            ))}
+        </Stack>
       </AppShell.Navbar>
 
       <AppShell.Main>
