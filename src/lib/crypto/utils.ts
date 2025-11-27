@@ -33,7 +33,7 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
  */
 export function stringToArrayBuffer(str: string): ArrayBuffer {
   const encoder = new TextEncoder();
-  return encoder.encode(str);
+  return encoder.encode(str).buffer;
 }
 
 /**

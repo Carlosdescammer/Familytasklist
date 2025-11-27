@@ -747,6 +747,73 @@ export const verificationTokens = pgTable(
   })
 );
 
+// End-to-End Encryption tables
+export const userKeys = pgTable('user_keys', {
+  userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  publicKey: text('public_key').notNull(),
+  encryptedPrivateKey: text('encrypted_private_key').notNull(),
+  keyVersion: integer('key_version').default(1).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const encryptedMessages = pgTable('encrypted_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }).notNull(),
+  senderId: uuid('sender_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  encryptedContent: text('encrypted_content').notNull(),
+  encryptedKeys: text('encrypted_keys').notNull(), // JSON: { userId: encryptedAESKey }
+  iv: text('iv').notNull(),
+  algorithm: text('algorithm').default('RSA-OAEP + AES-256-GCM').notNull(),
+  version: integer('version').default(1).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const encryptedNotes = pgTable('encrypted_notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }).notNull(),
+  encryptedContent: text('encrypted_content').notNull(),
+  encryptedKey: text('encrypted_key').notNull(),
+  iv: text('iv').notNull(),
+  noteType: text('note_type').default('note').notNull(), // 'task', 'note', 'document'
+  title: text('title'),
+  algorithm: text('algorithm').default('RSA-OAEP + AES-256-GCM').notNull(),
+  version: integer('version').default(1).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// E2EE Relations
+export const userKeysRelations = relations(userKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [userKeys.userId],
+    references: [users.id],
+  }),
+}));
+
+export const encryptedMessagesRelations = relations(encryptedMessages, ({ one }) => ({
+  family: one(families, {
+    fields: [encryptedMessages.familyId],
+    references: [families.id],
+  }),
+  sender: one(users, {
+    fields: [encryptedMessages.senderId],
+    references: [users.id],
+  }),
+}));
+
+export const encryptedNotesRelations = relations(encryptedNotes, ({ one }) => ({
+  user: one(users, {
+    fields: [encryptedNotes.userId],
+    references: [users.id],
+  }),
+  family: one(families, {
+    fields: [encryptedNotes.familyId],
+    references: [families.id],
+  }),
+}));
+
 // Type exports for use in application
 export type Family = typeof families.$inferSelect;
 export type NewFamily = typeof families.$inferInsert;
@@ -790,3 +857,9 @@ export type ForumReaction = typeof forumReactions.$inferSelect;
 export type NewForumReaction = typeof forumReactions.$inferInsert;
 export type PushToken = typeof pushTokens.$inferSelect;
 export type NewPushToken = typeof pushTokens.$inferInsert;
+export type UserKey = typeof userKeys.$inferSelect;
+export type NewUserKey = typeof userKeys.$inferInsert;
+export type EncryptedMessage = typeof encryptedMessages.$inferSelect;
+export type NewEncryptedMessage = typeof encryptedMessages.$inferInsert;
+export type EncryptedNote = typeof encryptedNotes.$inferSelect;
+export type NewEncryptedNote = typeof encryptedNotes.$inferInsert;

@@ -54,6 +54,9 @@ export interface ServerToClientEvents {
   // Typing indicators
   'typing:start': (data: { userId: string; userName: string; location: string }) => void;
   'typing:stop': (data: { userId: string; location: string }) => void;
+
+  // Encrypted message events
+  'message:encrypted': (data: { message: any }) => void;
 }
 
 export interface ClientToServerEvents {

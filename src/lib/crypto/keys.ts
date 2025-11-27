@@ -119,7 +119,7 @@ export async function deriveKeyFromPassphrase(
   return await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: salt as BufferSource,
       iterations: 100000, // High iteration count for security
       hash: 'SHA-256',
     },

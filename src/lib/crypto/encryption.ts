@@ -62,7 +62,7 @@ export async function encrypt(
   const encryptedData = await crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv: iv,
+      iv: iv as BufferSource,
     },
     aesKey,
     dataBuffer
@@ -87,7 +87,7 @@ export async function encrypt(
     algorithm: 'RSA-OAEP + AES-256-GCM',
     encryptedData: arrayBufferToBase64(encryptedData),
     encryptedKey: arrayBufferToBase64(encryptedAESKey),
-    iv: arrayBufferToBase64(iv),
+    iv: arrayBufferToBase64(iv.buffer as ArrayBuffer),
   };
 }
 
@@ -158,7 +158,7 @@ export async function encryptForMultipleRecipients(
   const encryptedData = await crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv: iv,
+      iv: iv as BufferSource,
     },
     aesKey,
     dataBuffer
@@ -187,7 +187,7 @@ export async function encryptForMultipleRecipients(
     algorithm: 'RSA-OAEP + AES-256-GCM',
     encryptedData: arrayBufferToBase64(encryptedData),
     encryptedKeys,
-    iv: arrayBufferToBase64(iv),
+    iv: arrayBufferToBase64(iv.buffer as ArrayBuffer),
   };
 }
 
@@ -264,7 +264,7 @@ export async function encryptWithPassword(
   const encryptedData = await crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv: iv,
+      iv: iv as BufferSource,
     },
     aesKey,
     dataBuffer
@@ -274,14 +274,14 @@ export async function encryptWithPassword(
   const aesKeyExported = await exportAESKey(aesKey);
   const { encryptPrivateKey } = await import('./keys');
   const encryptedAESKey = await encryptPrivateKey(
-    await importAESKey(base64ToArrayBuffer(aesKeyExported)),
+    aesKey,
     password
   );
 
   // Combine encrypted key + IV + encrypted data
   const payload = {
     encryptedKey: encryptedAESKey,
-    iv: arrayBufferToBase64(iv),
+    iv: arrayBufferToBase64(iv.buffer as ArrayBuffer),
     encryptedData: arrayBufferToBase64(encryptedData),
   };
 

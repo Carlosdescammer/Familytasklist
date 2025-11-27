@@ -13,6 +13,12 @@ import type { UsePresenceReturn } from '@/types/realtime';
 export function usePresence(): UsePresenceReturn {
   const [status, setStatus] = useState<'online' | 'away' | 'offline'>('online');
 
+  // Update status and emit to server
+  const updateStatus = useCallback((newStatus: 'online' | 'away' | 'offline') => {
+    setStatus(newStatus);
+    updatePresenceStatus(newStatus);
+  }, []);
+
   // Send heartbeat every 2 minutes
   useEffect(() => {
     const heartbeatInterval = setInterval(() => {
@@ -58,12 +64,6 @@ export function usePresence(): UsePresenceReturn {
       });
     };
   }, [status, updateStatus]);
-
-  // Update status and emit to server
-  const updateStatus = useCallback((newStatus: 'online' | 'away' | 'offline') => {
-    setStatus(newStatus);
-    updatePresenceStatus(newStatus);
-  }, []);
 
   return {
     status,
