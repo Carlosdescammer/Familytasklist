@@ -64,18 +64,18 @@ export default function NotesPage() {
         </Group>
 
         {/* Info Banner */}
-        <Paper p="md" withBorder bg="blue.0">
-          <Group gap="xs">
-            <IconShieldLock size={20} color="var(--mantine-color-blue-6)" />
-            <div style={{ flex: 1 }}>
-              <Text size="sm" fw={500}>
+        <Paper p="md" withBorder>
+          <Group gap="md" align="flex-start">
+            <IconShieldLock size={24} color="var(--mantine-color-blue-6)" style={{ marginTop: 2 }} />
+            <Stack gap="xs" style={{ flex: 1 }}>
+              <Text size="sm" fw={600}>
                 Your notes are end-to-end encrypted
               </Text>
-              <Text size="xs" c="dimmed">
+              <Text size="sm" opacity={0.8}>
                 Only you can read these notes. Not even your family members or our servers can access them.
                 Perfect for passwords, PINs, personal thoughts, and sensitive information.
               </Text>
-            </div>
+            </Stack>
           </Group>
         </Paper>
 
