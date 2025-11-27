@@ -63,6 +63,7 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
   const [notes, setNotes] = useState<DecryptedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const encryption = useEncryption(userId);
 
   // Fetch and decrypt notes
@@ -125,8 +126,14 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
   useEffect(() => {
     if (encryption.isUnlocked) {
       fetchNotes();
+    } else if (!encryption.isSetup && retryCount < 3) {
+      // Retry after a delay if encryption isn't set up yet
+      const timer = setTimeout(() => {
+        setRetryCount(retryCount + 1);
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-  }, [familyId, encryption.isUnlocked, onRefresh]);
+  }, [familyId, encryption.isUnlocked, encryption.isSetup, onRefresh, retryCount]);
 
   const handleDelete = async (noteId: string) => {
     if (!confirm('Are you sure you want to delete this encrypted note? This action cannot be undone.')) {
@@ -164,9 +171,19 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
   if (!encryption.isUnlocked) {
     return (
       <Paper p="md" withBorder>
-        <Stack align="center" gap="md">
-          <IconLock size={48} />
-          <Text>Encryption is being set up automatically...</Text>
+        <Stack align="center" gap="md" py="xl">
+          <Loader size="lg" />
+          <Stack align="center" gap="xs">
+            <Text fw={600}>Setting up encryption...</Text>
+            <Text size="sm" c="dimmed" ta="center">
+              This happens automatically and only takes a few seconds.
+            </Text>
+            {retryCount > 2 && (
+              <Text size="sm" c="orange" ta="center" mt="md">
+                Taking longer than expected. Please refresh the page if this continues.
+              </Text>
+            )}
+          </Stack>
         </Stack>
       </Paper>
     );

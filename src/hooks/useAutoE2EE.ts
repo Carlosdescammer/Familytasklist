@@ -63,7 +63,7 @@ export function useAutoE2EE(userId: string | null) {
     // Small delay to avoid running during initial render
     const timer = setTimeout(() => {
       setupAutomatically();
-    }, 1000);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [userId, encryption, autoSetupComplete, autoSetupInProgress]);
