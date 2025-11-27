@@ -19,6 +19,7 @@ import {
   Menu,
   ScrollArea,
   TextInput,
+  Button,
 } from '@mantine/core';
 import { IconLock, IconDots, IconTrash, IconSearch } from '@tabler/icons-react';
 import { useEncryption } from '@/hooks/useEncryption';
@@ -178,10 +179,28 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
             <Text size="sm" c="dimmed" ta="center">
               This happens automatically and only takes a few seconds.
             </Text>
+            <Text size="xs" c="dimmed" ta="center" mt="xs">
+              Check the browser console (F12) for detailed logs if this takes too long.
+            </Text>
             {retryCount > 2 && (
-              <Text size="sm" c="orange" ta="center" mt="md">
-                Taking longer than expected. Please refresh the page if this continues.
-              </Text>
+              <Stack align="center" gap="sm" mt="md">
+                <Text size="sm" c="orange" ta="center">
+                  Taking longer than expected. This might be due to:
+                </Text>
+                <Text size="xs" c="dimmed" ta="center">
+                  • Browser blocking IndexedDB<br />
+                  • Privacy/incognito mode restrictions<br />
+                  • Browser extension conflicts
+                </Text>
+                <Button
+                  size="sm"
+                  variant="light"
+                  onClick={() => window.location.reload()}
+                  mt="xs"
+                >
+                  Refresh Page
+                </Button>
+              </Stack>
             )}
           </Stack>
         </Stack>
