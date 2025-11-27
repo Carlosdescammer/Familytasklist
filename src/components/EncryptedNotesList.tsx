@@ -302,31 +302,25 @@ export const EncryptedNotesList = forwardRef<any, EncryptedNotesListProps>(
           <Stack align="center" gap="xs">
             <Text fw={600}>Setting up encryption...</Text>
             <Text size="sm" c="dimmed" ta="center">
-              This happens automatically and only takes a few seconds.
+              Initializing secure storage for your notes
             </Text>
-            <Text size="xs" c="dimmed" ta="center" mt="xs">
-              Check the browser console (F12) for detailed logs if this takes too long.
+
+            {/* Show skip button after 3 seconds */}
+            <Button
+              size="sm"
+              variant="subtle"
+              onClick={() => window.location.reload()}
+              mt="md"
+            >
+              Taking too long? Click to refresh
+            </Button>
+
+            <Text size="xs" c="dimmed" ta="center" mt="md">
+              If this persists, try:
+              <br />• Clear browser cache and cookies
+              <br />• Disable browser extensions
+              <br />• Try a different browser
             </Text>
-            {retryCount > 2 && (
-              <Stack align="center" gap="sm" mt="md">
-                <Text size="sm" c="orange" ta="center">
-                  Taking longer than expected. This might be due to:
-                </Text>
-                <Text size="xs" c="dimmed" ta="center">
-                  • Browser blocking IndexedDB<br />
-                  • Privacy/incognito mode restrictions<br />
-                  • Browser extension conflicts
-                </Text>
-                <Button
-                  size="sm"
-                  variant="light"
-                  onClick={() => window.location.reload()}
-                  mt="xs"
-                >
-                  Refresh Page
-                </Button>
-              </Stack>
-            )}
           </Stack>
         </Stack>
       </Paper>

@@ -38,10 +38,7 @@ export function useAutoE2EE(userId: string | null) {
       try {
         console.log('[Auto E2EE] Starting auto-setup for user:', userId);
 
-        // Wait a bit for encryption hook to initialize
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Check if already set up
+        // Check if already set up (no delay needed)
         if (encryption.isSetup) {
           console.log('[Auto E2EE] Encryption already set up, checking unlock status');
           // Auto-unlock if not already unlocked
@@ -74,13 +71,9 @@ export function useAutoE2EE(userId: string | null) {
       }
     };
 
-    // Small delay to avoid running during initial render
-    const timer = setTimeout(() => {
-      setupAutomatically();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [userId, encryption, autoSetupComplete, autoSetupInProgress]);
+    // Run immediately - no delay needed
+    setupAutomatically();
+  }, [userId, encryption.isSetup, encryption.isUnlocked, autoSetupComplete, autoSetupInProgress]);
 
   return {
     isReady: autoSetupComplete,
