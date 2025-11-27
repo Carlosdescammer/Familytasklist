@@ -181,6 +181,13 @@ export function getSocketServer(): SocketIOServer | null {
 }
 
 /**
+ * Get Socket.IO server instance (alias for getSocketServer)
+ */
+export function getIO(): SocketIOServer | null {
+  return io;
+}
+
+/**
  * Emit event to a specific family room
  */
 export function emitToFamily<K extends keyof ServerToClientEvents>(

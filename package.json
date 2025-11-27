@@ -37,6 +37,8 @@
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "resend": "^6.5.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "svix": "^1.81.0",
     "uuid": "^13.0.0",
     "web-push": "^3.6.7",

@@ -49,6 +49,8 @@ import { canAccessPage, type PageName } from '@/lib/page-access';
 import { FamilySwitcher } from '@/components/FamilySwitcher';
 import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
+import { RealtimeProvider } from '@/components/RealtimeProvider';
+import { setBadgeForNotifications } from '@/lib/badging';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: IconHome, pageName: null }, // Dashboard has no restrictions
@@ -192,6 +194,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Update app badge when unread count changes
+  useEffect(() => {
+    setBadgeForNotifications(unreadCount);
+  }, [unreadCount]);
+
   // Filter notifications based on selected filters
   const filteredNotifications = notifications.filter(notification => {
     // Filter by type
@@ -217,16 +224,27 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return true;
   });
 
+  // Prepare realtime config
+  const realtimeConfig = user?.familyId && user?.id
+    ? {
+        familyId: user.familyId,
+        userId: user.id,
+        userName: user.name || user.email,
+        autoConnect: true,
+      }
+    : null;
+
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{
-        width: 250,
-        breakpoint: 'sm',
-        collapsed: { mobile: !opened },
-      }}
-      padding={{ base: 'xs', sm: 'md' }}
-    >
+    <RealtimeProvider config={realtimeConfig}>
+      <AppShell
+        header={{ height: 60 }}
+        navbar={{
+          width: 250,
+          breakpoint: 'sm',
+          collapsed: { mobile: !opened },
+        }}
+        padding={{ base: 'xs', sm: 'md' }}
+      >
       <AppShell.Header>
         <Group h="100%" px={{ base: 'xs', sm: 'md' }} justify="space-between">
           <Group>
@@ -445,5 +463,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Stack>
       </AppShell.Main>
     </AppShell>
+    </RealtimeProvider>
   );
 }

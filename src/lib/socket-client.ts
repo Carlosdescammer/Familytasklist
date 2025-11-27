@@ -125,6 +125,13 @@ export function getSocketClient(): Socket<ServerToClientEvents, ClientToServerEv
 }
 
 /**
+ * Get Socket.IO client instance (alias for getSocketClient)
+ */
+export function getSocket(): Socket<ServerToClientEvents, ClientToServerEvents> | null {
+  return socket;
+}
+
+/**
  * Join a family room
  */
 export function joinFamily(familyId: string, userId: string, userName: string): void {
