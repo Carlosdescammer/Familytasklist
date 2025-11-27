@@ -458,86 +458,125 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </AppShell.Header>
 
       <AppShell.Navbar p="md">
-        <Stack gap="xs">
-          {/* Main Section */}
-          {navItems
-            .filter((item) => {
-              if (item.pageName === null) return true;
-              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
-            })
-            .filter((item) => ['/', '/calendar', '/shopping'].includes(item.href))
-            .map((item) => (
-              <NavLink
-                key={item.href}
-                component={Link}
-                href={item.href}
-                label={item.label}
-                leftSection={<item.icon size={20} />}
-                active={pathname === item.href}
-                onClick={() => opened && toggle()}
-              />
-            ))}
+        <ScrollArea style={{ height: 'calc(100vh - 80px)' }}>
+          <Stack gap={0}>
+            {/* Main Section */}
+            {navItems
+              .filter((item) => {
+                if (item.pageName === null) return true;
+                return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+              })
+              .filter((item) => ['/', '/calendar', '/shopping'].includes(item.href))
+              .map((item) => (
+                <NavLink
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  label={item.label}
+                  leftSection={<item.icon size={18} />}
+                  active={pathname === item.href}
+                  onClick={() => opened && toggle()}
+                  style={{ borderRadius: 8, marginBottom: 2 }}
+                />
+              ))}
 
-          {/* Tasks & Rewards Section */}
-          <Divider label="Tasks & Rewards" labelPosition="center" mt="md" mb="xs" />
-          {navItems
-            .filter((item) => {
-              if (item.pageName === null) return true;
-              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
-            })
-            .filter((item) => ['/tasks', '/chores', '/rewards'].includes(item.href))
-            .map((item) => (
-              <NavLink
-                key={item.href}
-                component={Link}
-                href={item.href}
-                label={item.label}
-                leftSection={<item.icon size={20} />}
-                active={pathname === item.href}
-                onClick={() => opened && toggle()}
-              />
-            ))}
+            {/* Tasks & Rewards Section */}
+            <Text
+              size="xs"
+              fw={700}
+              tt="uppercase"
+              c="dimmed"
+              mt="xl"
+              mb="xs"
+              px="xs"
+              style={{ letterSpacing: '0.5px', opacity: 0.6 }}
+            >
+              Tasks & Rewards
+            </Text>
+            {navItems
+              .filter((item) => {
+                if (item.pageName === null) return true;
+                return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+              })
+              .filter((item) => ['/tasks', '/chores', '/rewards'].includes(item.href))
+              .map((item) => (
+                <NavLink
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  label={item.label}
+                  leftSection={<item.icon size={18} />}
+                  active={pathname === item.href}
+                  onClick={() => opened && toggle()}
+                  style={{ borderRadius: 8, marginBottom: 2 }}
+                />
+              ))}
 
-          {/* Family Content Section */}
-          <Divider label="Family" labelPosition="center" mt="md" mb="xs" />
-          {navItems
-            .filter((item) => {
-              if (item.pageName === null) return true;
-              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
-            })
-            .filter((item) => ['/recipes', '/photos', '/notes', '/community'].includes(item.href))
-            .map((item) => (
-              <NavLink
-                key={item.href}
-                component={Link}
-                href={item.href}
-                label={item.label}
-                leftSection={<item.icon size={20} />}
-                active={pathname === item.href}
-                onClick={() => opened && toggle()}
-              />
-            ))}
+            {/* Family Content Section */}
+            <Text
+              size="xs"
+              fw={700}
+              tt="uppercase"
+              c="dimmed"
+              mt="xl"
+              mb="xs"
+              px="xs"
+              style={{ letterSpacing: '0.5px', opacity: 0.6 }}
+            >
+              Family Content
+            </Text>
+            {navItems
+              .filter((item) => {
+                if (item.pageName === null) return true;
+                return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+              })
+              .filter((item) => ['/recipes', '/photos', '/notes', '/community'].includes(item.href))
+              .map((item) => (
+                <NavLink
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  label={item.label}
+                  leftSection={<item.icon size={18} />}
+                  active={pathname === item.href}
+                  onClick={() => opened && toggle()}
+                  style={{ borderRadius: 8, marginBottom: 2 }}
+                />
+              ))}
 
-          {/* Finance & Settings Section */}
-          <Divider label="More" labelPosition="center" mt="md" mb="xs" />
-          {navItems
-            .filter((item) => {
-              if (item.pageName === null) return true;
-              return canAccessPage(user?.role, user?.allowedPages, item.pageName);
-            })
-            .filter((item) => ['/budget', '/family', '/settings'].includes(item.href))
-            .map((item) => (
-              <NavLink
-                key={item.href}
-                component={Link}
-                href={item.href}
-                label={item.label}
-                leftSection={<item.icon size={20} />}
-                active={pathname === item.href}
-                onClick={() => opened && toggle()}
-              />
-            ))}
-        </Stack>
+            {/* Finance & Settings Section */}
+            <Text
+              size="xs"
+              fw={700}
+              tt="uppercase"
+              c="dimmed"
+              mt="xl"
+              mb="xs"
+              px="xs"
+              style={{ letterSpacing: '0.5px', opacity: 0.6 }}
+            >
+              Settings
+            </Text>
+            {navItems
+              .filter((item) => {
+                if (item.pageName === null) return true;
+                return canAccessPage(user?.role, user?.allowedPages, item.pageName);
+              })
+              .filter((item) => ['/budget', '/family', '/settings'].includes(item.href))
+              .map((item) => (
+                <NavLink
+                  key={item.href}
+                  component={Link}
+                  href={item.href}
+                  label={item.label}
+                  leftSection={<item.icon size={18} />}
+                  active={pathname === item.href}
+                  onClick={() => opened && toggle()}
+                  style={{ borderRadius: 8, marginBottom: 2 }}
+                />
+              ))}
+          </Stack>
+        </ScrollArea>
       </AppShell.Navbar>
 
       <AppShell.Main>
