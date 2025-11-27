@@ -241,12 +241,15 @@ export const EncryptedNotesList = forwardRef<any, EncryptedNotesListProps>(
   };
 
   const handleCloseEditor = () => {
-    // Auto-save on close if there are changes
-    if (selectedNote && (
+    // Auto-save on close if there's content
+    const hasContent = editContent.trim().length > 0;
+    const hasChanges = selectedNote ? (
       editContent !== selectedNote.decryptedContent ||
       editTitle !== (selectedNote.title || '') ||
       editType !== selectedNote.noteType
-    )) {
+    ) : hasContent;
+
+    if (hasChanges) {
       handleSaveEdit();
     } else {
       setEditorOpened(false);
