@@ -1,21 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Container, Paper, Title, Text, Button, Stack, TextInput, Group } from '@mantine/core';
 import { useRouter } from 'next/navigation';
 import { notifications } from '@mantine/notifications';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { E2EESetupWizard } from '@/components/E2EESetupWizard';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user } = useCurrentUser();
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice');
   const [familyName, setFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
-  const [showE2EESetup, setShowE2EESetup] = useState(false);
-  const [familyCreated, setFamilyCreated] = useState(false);
 
   const handleCreateFamily = async () => {
     console.log('handleCreateFamily called, familyName:', familyName);
@@ -56,10 +51,10 @@ export default function OnboardingPage() {
         color: 'green',
       });
 
-      console.log('Opening E2EE setup wizard...');
-      // Open E2EE setup wizard automatically
-      setFamilyCreated(true);
-      setShowE2EESetup(true);
+      console.log('Redirecting to /...');
+      // Force a full page reload to refresh the session with the new familyId
+      // E2EE will be set up automatically in the background
+      window.location.href = '/';
     } catch (error) {
       console.error('Error creating family:', error);
       notifications.show({
@@ -98,10 +93,9 @@ export default function OnboardingPage() {
         color: 'green',
       });
 
-      console.log('Opening E2EE setup wizard...');
-      // Open E2EE setup wizard automatically
-      setFamilyCreated(true);
-      setShowE2EESetup(true);
+      // Force a full page reload to refresh the session with the new familyId
+      // E2EE will be set up automatically in the background
+      window.location.href = '/';
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -185,26 +179,6 @@ export default function OnboardingPage() {
           )}
         </Stack>
       </Paper>
-
-      {/* E2EE Setup Wizard - Auto-opens after family creation/join */}
-      {user && (
-        <E2EESetupWizard
-          userId={user.id}
-          opened={showE2EESetup}
-          onClose={() => setShowE2EESetup(false)}
-          onComplete={() => {
-            notifications.show({
-              title: 'Encryption Ready',
-              message: 'Your secure messaging is now set up!',
-              color: 'green',
-            });
-            // Redirect to dashboard after E2EE setup
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 1500);
-          }}
-        />
-      )}
     </Container>
   );
 }
