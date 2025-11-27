@@ -50,6 +50,7 @@ import { FamilySwitcher } from '@/components/FamilySwitcher';
 import { PushNotificationPrompt } from '@/components/PushNotificationPrompt';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { RealtimeProvider } from '@/components/RealtimeProvider';
+import { E2EESetupPrompt } from '@/components/E2EESetupPrompt';
 import { setBadgeForNotifications } from '@/lib/badging';
 
 const navItems = [
@@ -459,6 +460,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <Stack gap="md">
           <PushNotificationPrompt />
           <OfflineIndicator />
+          {user && <E2EESetupPrompt userId={user.id} />}
           {children}
         </Stack>
       </AppShell.Main>
