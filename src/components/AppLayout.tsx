@@ -40,6 +40,7 @@ import {
   IconWorld,
   IconPigMoney,
   IconPhoto,
+  IconLock,
 } from '@tabler/icons-react';
 import { useClerk } from '@clerk/nextjs';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -59,6 +60,7 @@ const navItems = [
   { href: '/shopping', label: 'Shopping', icon: IconShoppingCart, pageName: 'shopping' as PageName },
   { href: '/recipes', label: 'Recipes', icon: IconChefHat, pageName: null }, // Recipes has no restrictions
   { href: '/photos', label: 'Photos', icon: IconPhoto, pageName: null }, // Photos has no restrictions
+  { href: '/notes', label: 'My Notes', icon: IconLock, pageName: null }, // Private encrypted notes
   { href: '/community', label: 'Community', icon: IconWorld, pageName: 'community' as PageName },
   { href: '/tasks', label: 'Tasks', icon: IconCheckbox, pageName: 'tasks' as PageName },
   { href: '/budget', label: 'Budget', icon: IconPigMoney, pageName: 'budget' as PageName },
