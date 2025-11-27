@@ -20,8 +20,11 @@ import {
   ScrollArea,
   TextInput,
   Button,
+  Modal,
+  Textarea,
+  Select,
 } from '@mantine/core';
-import { IconLock, IconDots, IconTrash, IconSearch } from '@tabler/icons-react';
+import { IconLock, IconDots, IconTrash, IconSearch, IconCopy, IconEdit, IconEye } from '@tabler/icons-react';
 import { useEncryption } from '@/hooks/useEncryption';
 import { notifications } from '@mantine/notifications';
 
@@ -65,6 +68,12 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const [viewModalOpened, setViewModalOpened] = useState(false);
+  const [editModalOpened, setEditModalOpened] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<DecryptedNote | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editType, setEditType] = useState('note');
   const encryption = useEncryption(userId);
 
   // Fetch and decrypt notes
@@ -135,6 +144,73 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
       return () => clearTimeout(timer);
     }
   }, [familyId, encryption.isUnlocked, encryption.isSetup, onRefresh, retryCount]);
+
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+    notifications.show({
+      title: 'Copied',
+      message: 'Note content copied to clipboard',
+      color: 'green',
+    });
+  };
+
+  const handleView = (note: DecryptedNote) => {
+    setSelectedNote(note);
+    setViewModalOpened(true);
+  };
+
+  const handleEdit = (note: DecryptedNote) => {
+    setSelectedNote(note);
+    setEditContent(note.decryptedContent);
+    setEditTitle(note.title || '');
+    setEditType(note.noteType);
+    setEditModalOpened(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedNote) return;
+
+    try {
+      // Delete old note and create new one (since content is encrypted)
+      await fetch(`/api/notes/encrypted/${selectedNote.id}`, {
+        method: 'DELETE',
+      });
+
+      // Encrypt new content
+      const payload = await encryption.encryptForFamily(editContent, {});
+
+      // Create new note
+      await fetch('/api/notes/encrypted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          familyId,
+          encryptedContent: payload.encryptedData,
+          encryptedKey: Object.values(payload.encryptedKeys)[0],
+          iv: payload.iv,
+          noteType: editType,
+          title: editTitle || null,
+          algorithm: payload.algorithm,
+          version: payload.version,
+        }),
+      });
+
+      notifications.show({
+        title: 'Success',
+        message: 'Note updated successfully',
+        color: 'green',
+      });
+
+      setEditModalOpened(false);
+      fetchNotes();
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to update note',
+        color: 'red',
+      });
+    }
+  };
 
   const handleDelete = async (noteId: string) => {
     if (!confirm('Are you sure you want to delete this encrypted note? This action cannot be undone.')) {
@@ -250,7 +326,15 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
                       >
                         {note.noteType}
                       </Badge>
-                      <Badge leftSection={<IconLock size={12} />} color="green" variant="dot" size="sm">
+                      <Badge
+                        leftSection={<IconLock size={10} />}
+                        color="teal"
+                        variant="outline"
+                        size="xs"
+                        styles={{
+                          root: { textTransform: 'none' }
+                        }}
+                      >
                         Encrypted
                       </Badge>
                     </Group>
@@ -285,6 +369,25 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
 
                     <Menu.Dropdown>
                       <Menu.Item
+                        leftSection={<IconEye size={14} />}
+                        onClick={() => handleView(note)}
+                      >
+                        View Full Note
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconCopy size={14} />}
+                        onClick={() => handleCopy(note.decryptedContent)}
+                      >
+                        Copy Content
+                      </Menu.Item>
+                      <Menu.Item
+                        leftSection={<IconEdit size={14} />}
+                        onClick={() => handleEdit(note)}
+                      >
+                        Edit
+                      </Menu.Item>
+                      <Menu.Divider />
+                      <Menu.Item
                         color="red"
                         leftSection={<IconTrash size={14} />}
                         onClick={() => handleDelete(note.id)}
@@ -299,6 +402,116 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
           </Stack>
         )}
       </ScrollArea>
+
+      {/* View Modal */}
+      <Modal
+        opened={viewModalOpened}
+        onClose={() => setViewModalOpened(false)}
+        title={
+          <Group gap="xs">
+            <IconLock size={18} />
+            <Text fw={600}>{selectedNote?.title || 'Encrypted Note'}</Text>
+          </Group>
+        }
+        size="lg"
+      >
+        <Stack gap="md">
+          <Group gap="xs">
+            <Badge
+              leftSection={NOTE_TYPE_EMOJI[selectedNote?.noteType || 'note']}
+              color={NOTE_TYPE_COLOR[selectedNote?.noteType || 'note'] || 'blue'}
+              variant="light"
+              size="sm"
+            >
+              {selectedNote?.noteType}
+            </Badge>
+            <Badge
+              leftSection={<IconLock size={10} />}
+              color="teal"
+              variant="outline"
+              size="xs"
+            >
+              Encrypted
+            </Badge>
+          </Group>
+
+          <Text
+            style={{
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {selectedNote?.decryptedContent}
+          </Text>
+
+          <Text size="xs" c="dimmed">
+            Created: {selectedNote && new Date(selectedNote.createdAt).toLocaleString()}
+          </Text>
+
+          <Group justify="flex-end">
+            <Button
+              variant="light"
+              leftSection={<IconCopy size={16} />}
+              onClick={() => {
+                if (selectedNote) {
+                  handleCopy(selectedNote.decryptedContent);
+                }
+              }}
+            >
+              Copy Content
+            </Button>
+            <Button onClick={() => setViewModalOpened(false)}>Close</Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        opened={editModalOpened}
+        onClose={() => setEditModalOpened(false)}
+        title="Edit Encrypted Note"
+        size="lg"
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Title (optional)"
+            placeholder="Note title..."
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+          />
+
+          <Select
+            label="Type"
+            value={editType}
+            onChange={(val) => setEditType(val || 'note')}
+            data={[
+              { value: 'note', label: '📝 Note' },
+              { value: 'password', label: '🔑 Password' },
+              { value: 'personal', label: '👤 Personal' },
+              { value: 'medical', label: '⚕️ Medical' },
+              { value: 'financial', label: '💰 Financial' },
+              { value: 'ideas', label: '💡 Ideas' },
+              { value: 'diary', label: '📔 Diary' },
+            ]}
+          />
+
+          <Textarea
+            label="Content"
+            placeholder="Note content..."
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            minRows={6}
+            autosize
+          />
+
+          <Group justify="flex-end">
+            <Button variant="subtle" onClick={() => setEditModalOpened(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }
