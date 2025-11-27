@@ -23,8 +23,29 @@ import {
   Modal,
   Textarea,
   Select,
+  Divider,
+  Tooltip,
 } from '@mantine/core';
-import { IconLock, IconDots, IconTrash, IconSearch, IconCopy, IconEdit, IconEye } from '@tabler/icons-react';
+import {
+  IconLock,
+  IconDots,
+  IconTrash,
+  IconSearch,
+  IconCopy,
+  IconEdit,
+  IconEye,
+  IconBold,
+  IconItalic,
+  IconUnderline,
+  IconStrikethrough,
+  IconH1,
+  IconH2,
+  IconH3,
+  IconList,
+  IconListNumbers,
+  IconQuote,
+  IconCode,
+} from '@tabler/icons-react';
 import { useEncryption } from '@/hooks/useEncryption';
 import { notifications } from '@mantine/notifications';
 
@@ -74,7 +95,43 @@ export const EncryptedNotesList = forwardRef<any, EncryptedNotesListProps>(
   const [editContent, setEditContent] = useState('');
   const [editTitle, setEditTitle] = useState('');
   const [editType, setEditType] = useState('note');
+  const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
   const encryption = useEncryption(userId);
+
+  // Formatting functions
+  const insertFormat = (before: string, after: string = '') => {
+    if (!textareaRef) return;
+
+    const start = textareaRef.selectionStart;
+    const end = textareaRef.selectionEnd;
+    const selectedText = editContent.substring(start, end);
+    const newText =
+      editContent.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      editContent.substring(end);
+
+    setEditContent(newText);
+
+    // Set cursor position after insertion
+    setTimeout(() => {
+      textareaRef.focus();
+      const newPos = start + before.length + selectedText.length;
+      textareaRef.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
+  const formatBold = () => insertFormat('**', '**');
+  const formatItalic = () => insertFormat('_', '_');
+  const formatStrikethrough = () => insertFormat('~~', '~~');
+  const formatCode = () => insertFormat('`', '`');
+  const formatHeading1 = () => insertFormat('# ');
+  const formatHeading2 = () => insertFormat('## ');
+  const formatHeading3 = () => insertFormat('### ');
+  const formatBulletList = () => insertFormat('• ');
+  const formatNumberedList = () => insertFormat('1. ');
+  const formatQuote = () => insertFormat('> ');
 
   // Fetch and decrypt notes
   const fetchNotes = async () => {
@@ -534,8 +591,69 @@ export const EncryptedNotesList = forwardRef<any, EncryptedNotesListProps>(
                 }}
               />
 
+              {/* Formatting Toolbar */}
+              <Group gap={4} mb="md" wrap="wrap">
+                <Tooltip label="Bold (Ctrl+B)">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatBold}>
+                    <IconBold size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Italic (Ctrl+I)">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatItalic}>
+                    <IconItalic size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Strikethrough">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatStrikethrough}>
+                    <IconStrikethrough size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Inline Code">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatCode}>
+                    <IconCode size={16} />
+                  </ActionIcon>
+                </Tooltip>
+
+                <Divider orientation="vertical" />
+
+                <Tooltip label="Heading 1">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatHeading1}>
+                    <IconH1 size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Heading 2">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatHeading2}>
+                    <IconH2 size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Heading 3">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatHeading3}>
+                    <IconH3 size={16} />
+                  </ActionIcon>
+                </Tooltip>
+
+                <Divider orientation="vertical" />
+
+                <Tooltip label="Bullet List">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatBulletList}>
+                    <IconList size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Numbered List">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatNumberedList}>
+                    <IconListNumbers size={16} />
+                  </ActionIcon>
+                </Tooltip>
+                <Tooltip label="Block Quote">
+                  <ActionIcon variant="subtle" size="sm" onClick={formatQuote}>
+                    <IconQuote size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+
               {/* Content Textarea - Apple Notes Style */}
               <Textarea
+                ref={(ref) => setTextareaRef(ref)}
                 placeholder="Start typing..."
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
