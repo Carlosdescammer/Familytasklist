@@ -13,10 +13,20 @@ import { eq } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get current user's database ID
+    const { users } = await import('@/db/schema');
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkUserId),
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const body = await req.json();
@@ -36,7 +46,7 @@ export async function POST(req: NextRequest) {
         encryptedPrivateKey,
         updatedAt: new Date(),
       })
-      .where(eq(userKeys.userId, userId))
+      .where(eq(userKeys.userId, currentUser.id))
       .returning();
 
     if (!updated || updated.length === 0) {
@@ -48,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      userId,
+      userId: currentUser.id,
     });
   } catch (error) {
     console.error('[E2EE Update Passphrase] Error:', error);

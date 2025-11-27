@@ -13,10 +13,20 @@ import { eq } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get current user's database ID
+    const { users } = await import('@/db/schema');
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkUserId),
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const body = await req.json();
@@ -31,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Check if user already has keys
     const existingKeys = await db.query.userKeys.findFirst({
-      where: eq(userKeys.userId, userId),
+      where: eq(userKeys.userId, currentUser.id),
     });
 
     if (existingKeys) {
@@ -43,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     // Store encryption keys
     const newKeys = await db.insert(userKeys).values({
-      userId,
+      userId: currentUser.id,
       publicKey,
       encryptedPrivateKey,
       keyVersion: 1,
@@ -51,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      userId,
+      userId: currentUser.id,
       publicKey: newKeys[0].publicKey,
     });
   } catch (error) {
