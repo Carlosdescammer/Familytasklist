@@ -6,17 +6,16 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Container, Stack, Title, Button, Group, Badge, Text, Paper } from '@mantine/core';
 import { IconLock, IconPlus, IconShieldLock } from '@tabler/icons-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { EncryptedNoteEditor } from '@/components/EncryptedNoteEditor';
 import { EncryptedNotesList } from '@/components/EncryptedNotesList';
 import AppLayout from '@/components/AppLayout';
 
 export default function NotesPage() {
   const { user, loading: userLoading } = useCurrentUser();
-  const [editorOpened, setEditorOpened] = useState(false);
+  const notesListRef = useRef<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   if (userLoading) {
@@ -60,7 +59,7 @@ export default function NotesPage() {
             </Badge>
             <Button
               leftSection={<IconPlus size={16} />}
-              onClick={() => setEditorOpened(true)}
+              onClick={() => notesListRef.current?.openNewNote()}
             >
               New Note
             </Button>
@@ -85,21 +84,10 @@ export default function NotesPage() {
 
         {/* Notes List */}
         <EncryptedNotesList
+          ref={notesListRef}
           familyId={user.familyId}
           userId={user.id}
           onRefresh={refreshKey}
-        />
-
-        {/* Note Editor Modal */}
-        <EncryptedNoteEditor
-          userId={user.id}
-          familyId={user.familyId}
-          opened={editorOpened}
-          onClose={() => setEditorOpened(false)}
-          onSaved={() => {
-            setRefreshKey((prev) => prev + 1);
-          }}
-          editNote={null}
         />
       </Stack>
     </Container>

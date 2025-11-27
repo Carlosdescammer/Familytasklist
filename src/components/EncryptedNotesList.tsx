@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import {
   Paper,
   Stack,
@@ -63,7 +63,8 @@ const NOTE_TYPE_COLOR: Record<string, string> = {
   diary: 'orange',
 };
 
-export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNotesListProps) {
+export const EncryptedNotesList = forwardRef<any, EncryptedNotesListProps>(
+  function EncryptedNotesList({ familyId, userId, onRefresh }, ref) {
   const [notes, setNotes] = useState<DecryptedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -162,8 +163,28 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
     setEditorOpened(true);
   };
 
+  const openNewNote = () => {
+    setSelectedNote(null);
+    setEditContent('');
+    setEditTitle('');
+    setEditType('note');
+    setEditorOpened(true);
+  };
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    openNewNote,
+  }));
+
   const handleSaveEdit = async () => {
-    if (!selectedNote) return;
+    if (!editContent.trim()) {
+      notifications.show({
+        title: 'Error',
+        message: 'Note content cannot be empty',
+        color: 'red',
+      });
+      return;
+    }
 
     try {
       // Get user's public key
@@ -172,17 +193,19 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
         throw new Error('No public key found');
       }
 
-      // Encrypt new content
+      // Encrypt content
       const payload = await encryption.encryptForFamily(editContent, {
         [userId]: publicKey,
       });
 
-      // Delete old note and create new one (since content is encrypted)
-      await fetch(`/api/notes/encrypted/${selectedNote.id}`, {
-        method: 'DELETE',
-      });
+      // If editing existing note, delete it first
+      if (selectedNote) {
+        await fetch(`/api/notes/encrypted/${selectedNote.id}`, {
+          method: 'DELETE',
+        });
+      }
 
-      // Create new note
+      // Create note (works for both new and edited notes)
       await fetch('/api/notes/encrypted', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -200,7 +223,7 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
 
       notifications.show({
         title: 'Success',
-        message: 'Note updated successfully',
+        message: selectedNote ? 'Note updated successfully' : 'Note created successfully',
         color: 'green',
       });
 
@@ -211,7 +234,7 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
       console.error('Error saving note:', error);
       notifications.show({
         title: 'Error',
-        message: 'Failed to update note',
+        message: 'Failed to save note',
         color: 'red',
       });
     }
@@ -552,4 +575,4 @@ export function EncryptedNotesList({ familyId, userId, onRefresh }: EncryptedNot
       </Modal>
     </Stack>
   );
-}
+});
