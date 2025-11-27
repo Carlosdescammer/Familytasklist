@@ -15,10 +15,20 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get current user's database ID
+    const { users } = await import('@/db/schema');
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkUserId),
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const noteId = params.id;
@@ -29,7 +39,7 @@ export async function DELETE(
       .where(
         and(
           eq(encryptedNotes.id, noteId),
-          eq(encryptedNotes.userId, userId)
+          eq(encryptedNotes.userId, currentUser.id)
         )
       );
 

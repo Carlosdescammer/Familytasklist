@@ -16,9 +16,9 @@ import { eq, and, desc } from 'drizzle-orm';
  */
 export async function GET(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -33,9 +33,19 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Get current user's database ID
+    const { users } = await import('@/db/schema');
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkUserId),
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Build query
     let query = and(
-      eq(encryptedNotes.userId, userId),
+      eq(encryptedNotes.userId, currentUser.id),
       eq(encryptedNotes.familyId, familyId)
     );
 
@@ -64,10 +74,20 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get current user's database ID
+    const { users } = await import('@/db/schema');
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.clerkId, clerkUserId),
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const body = await req.json();
@@ -91,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     // Create encrypted note
     const newNote = await db.insert(encryptedNotes).values({
-      userId,
+      userId: currentUser.id,
       familyId,
       encryptedContent,
       encryptedKey,
