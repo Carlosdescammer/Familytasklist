@@ -41,6 +41,8 @@ import {
   IconPigMoney,
   IconPhoto,
   IconLock,
+  IconSparkles,
+  IconGift,
 } from '@tabler/icons-react';
 import { useClerk } from '@clerk/nextjs';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -58,6 +60,8 @@ const navItems = [
   { href: '/', label: 'Dashboard', icon: IconHome, pageName: null }, // Dashboard has no restrictions
   { href: '/calendar', label: 'Calendar', icon: IconCalendar, pageName: 'calendar' as PageName },
   { href: '/shopping', label: 'Shopping', icon: IconShoppingCart, pageName: 'shopping' as PageName },
+  { href: '/chores', label: 'Chores', icon: IconSparkles, pageName: null }, // Chores available to all
+  { href: '/rewards', label: 'Rewards', icon: IconGift, pageName: null }, // Rewards available to all
   { href: '/recipes', label: 'Recipes', icon: IconChefHat, pageName: null }, // Recipes has no restrictions
   { href: '/photos', label: 'Photos', icon: IconPhoto, pageName: null }, // Photos has no restrictions
   { href: '/notes', label: 'My Notes', icon: IconLock, pageName: null }, // Private encrypted notes
@@ -192,6 +196,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       case 'recipe_shared':
         router.push('/recipes');
         break;
+      case 'chore_assigned':
+      case 'chore_completed':
+      case 'chore_verified':
+      case 'chore_rejected':
+        router.push('/chores');
+        break;
+      case 'reward_redeemed':
+      case 'reward_fulfilled':
+      case 'reward_cancelled':
+      case 'achievement_unlocked':
+        router.push('/rewards');
+        break;
       default:
         // For unknown types, go to dashboard
         router.push('/');
@@ -215,12 +231,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       const shoppingTypes = ['shopping_list_created', 'shopping_list_updated'];
       const budgetTypes = ['budget_alert', 'budget_limit_reached'];
       const familyTypes = ['family_member_joined', 'recipe_shared'];
+      const choreTypes = ['chore_assigned', 'chore_completed', 'chore_verified', 'chore_rejected'];
+      const rewardTypes = ['reward_redeemed', 'reward_fulfilled', 'reward_cancelled', 'achievement_unlocked'];
 
       if (typeCategory === 'tasks' && !taskTypes.includes(notification.type)) return false;
       if (typeCategory === 'events' && !eventTypes.includes(notification.type)) return false;
       if (typeCategory === 'shopping' && !shoppingTypes.includes(notification.type)) return false;
       if (typeCategory === 'budget' && !budgetTypes.includes(notification.type)) return false;
       if (typeCategory === 'family' && !familyTypes.includes(notification.type)) return false;
+      if (typeCategory === 'chores' && !choreTypes.includes(notification.type)) return false;
+      if (typeCategory === 'rewards' && !rewardTypes.includes(notification.type)) return false;
     }
 
     // Filter by read status
@@ -332,6 +352,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                       data={[
                         { value: 'all', label: 'All Types' },
                         { value: 'tasks', label: 'Tasks' },
+                        { value: 'chores', label: 'Chores' },
+                        { value: 'rewards', label: 'Rewards' },
                         { value: 'events', label: 'Events' },
                         { value: 'shopping', label: 'Shopping' },
                         { value: 'budget', label: 'Budget' },

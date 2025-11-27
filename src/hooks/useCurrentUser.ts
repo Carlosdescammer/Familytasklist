@@ -12,6 +12,7 @@ type DbUserRaw = {
   familyId: string | null;
   allowedPages: string | null;
   gamificationEnabled: boolean;
+  gamificationPoints: number;
   familyBucks: string;
   totalPointsEarned: string;
   pointsPerTask: string;

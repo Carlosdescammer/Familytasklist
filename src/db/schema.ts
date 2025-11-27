@@ -32,6 +32,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash'),
   role: text('role').default('parent').notNull(),
   name: text('name'),
+  avatarUrl: text('avatar_url'),
   bio: text('bio'),
   birthday: timestamp('birthday', { withTimezone: true }),
   favoriteColor: text('favorite_color'),
@@ -45,6 +46,7 @@ export const users = pgTable('users', {
   // Child Profile & Gamification fields
   allowedPages: text('allowed_pages'), // JSON array of page names child can access
   gamificationEnabled: boolean('gamification_enabled').default(false).notNull(),
+  gamificationPoints: integer('gamification_points').default(0).notNull(), // Current gamification points for chores/rewards
   familyBucks: numeric('family_bucks', { precision: 10, scale: 2 }).default('0').notNull(), // Current balance
   totalPointsEarned: numeric('total_points_earned', { precision: 10, scale: 2 }).default('0').notNull(), // Lifetime points
   pointsPerTask: numeric('points_per_task', { precision: 10, scale: 2 }).default('10').notNull(), // Points awarded per task completion
@@ -814,6 +816,255 @@ export const encryptedNotesRelations = relations(encryptedNotes, ({ one }) => ({
   }),
 }));
 
+// Chores & Gamification Tables
+
+// Chores table - Define reusable chores
+export const chores = pgTable('chores', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }).notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  points: integer('points').default(10).notNull(), // Points earned for completion
+  allowanceCents: integer('allowance_cents').default(0).notNull(), // Money in cents (e.g., 100 = $1.00)
+  category: text('category').default('general').notNull(), // 'cleaning', 'yard', 'pets', 'kitchen', etc.
+  difficulty: text('difficulty').default('medium').notNull(), // 'easy', 'medium', 'hard'
+  estimatedMinutes: integer('estimated_minutes'), // Time estimate
+  icon: text('icon'), // Emoji or icon name
+  isRecurring: boolean('is_recurring').default(false).notNull(),
+  recurrencePattern: text('recurrence_pattern'), // 'daily', 'weekly', 'monthly'
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Chore Assignments - Assign chores to family members
+export const choreAssignments = pgTable('chore_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  choreId: uuid('chore_id').references(() => chores.id, { onDelete: 'cascade' }).notNull(),
+  assignedTo: uuid('assigned_to').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  assignedBy: uuid('assigned_by').references(() => users.id, { onDelete: 'set null' }),
+  dueDate: timestamp('due_date', { withTimezone: true }),
+  status: text('status').default('pending').notNull(), // 'pending', 'in_progress', 'completed', 'verified'
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  verifiedBy: uuid('verified_by').references(() => users.id, { onDelete: 'set null' }),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Allowance Payments - Track allowance paid for chores
+export const allowancePayments = pgTable('allowance_payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }).notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  amountCents: integer('amount_cents').notNull(),
+  choreAssignmentId: uuid('chore_assignment_id').references(() => choreAssignments.id, { onDelete: 'set null' }),
+  paidBy: uuid('paid_by').references(() => users.id, { onDelete: 'set null' }),
+  paymentMethod: text('payment_method').default('cash').notNull(), // 'cash', 'bank_transfer', 'virtual'
+  notes: text('notes'),
+  paidAt: timestamp('paid_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Achievements/Badges - Define achievements users can earn
+export const achievements = pgTable('achievements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  icon: text('icon').notNull(), // Emoji or icon name
+  category: text('category').default('general').notNull(), // 'tasks', 'chores', 'budget', 'social'
+  points: integer('points').default(0).notNull(), // Points required to unlock (0 = unlocked by action)
+  rarity: text('rarity').default('common').notNull(), // 'common', 'rare', 'epic', 'legendary'
+  unlockCondition: text('unlock_condition').notNull(), // JSON describing condition
+  color: text('color').default('blue').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// User Achievements - Track which users have which achievements
+export const userAchievements = pgTable('user_achievements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  achievementId: uuid('achievement_id').references(() => achievements.id, { onDelete: 'cascade' }).notNull(),
+  unlockedAt: timestamp('unlocked_at', { withTimezone: true }).defaultNow().notNull(),
+  progress: integer('progress').default(100).notNull(), // Percentage (0-100)
+});
+
+// Rewards Store - Items users can buy with points
+export const rewards = pgTable('rewards', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: 'cascade' }).notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  pointsCost: integer('points_cost').notNull(),
+  category: text('category').default('privilege').notNull(), // 'privilege', 'treat', 'gift', 'activity'
+  icon: text('icon'), // Emoji
+  isAvailable: boolean('is_available').default(true).notNull(),
+  stockLimit: integer('stock_limit'), // null = unlimited
+  stockRemaining: integer('stock_remaining'),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Reward Redemptions - Track when users redeem rewards
+export const rewardRedemptions = pgTable('reward_redemptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  rewardId: uuid('reward_id').references(() => rewards.id, { onDelete: 'cascade' }).notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  pointsSpent: integer('points_spent').notNull(),
+  status: text('status').default('pending').notNull(), // 'pending', 'approved', 'fulfilled', 'denied'
+  fulfilledBy: uuid('fulfilled_by').references(() => users.id, { onDelete: 'set null' }),
+  fulfilledAt: timestamp('fulfilled_at', { withTimezone: true }),
+  notes: text('notes'),
+  redeemedAt: timestamp('redeemed_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Point Transactions - Full history of point gains/losses
+export const pointTransactions = pgTable('point_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  amount: integer('amount').notNull(), // Positive for gain, negative for spend
+  type: text('type').notNull(), // 'chore_complete', 'task_complete', 'reward_redeem', 'bonus', 'penalty'
+  description: text('description').notNull(),
+  choreAssignmentId: uuid('chore_assignment_id').references(() => choreAssignments.id, { onDelete: 'set null' }),
+  taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'set null' }),
+  rewardRedemptionId: uuid('reward_redemption_id').references(() => rewardRedemptions.id, { onDelete: 'set null' }),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// User Streaks - Track daily/weekly streaks
+export const userStreaks = pgTable('user_streaks', {
+  userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  currentStreak: integer('current_streak').default(0).notNull(),
+  longestStreak: integer('longest_streak').default(0).notNull(),
+  lastActivityDate: timestamp('last_activity_date', { withTimezone: true }),
+  streakType: text('streak_type').default('daily').notNull(), // 'daily', 'weekly'
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Chores & Gamification Relations
+export const choresRelations = relations(chores, ({ one, many }) => ({
+  family: one(families, {
+    fields: [chores.familyId],
+    references: [families.id],
+  }),
+  creator: one(users, {
+    fields: [chores.createdBy],
+    references: [users.id],
+  }),
+  assignments: many(choreAssignments),
+}));
+
+export const choreAssignmentsRelations = relations(choreAssignments, ({ one }) => ({
+  chore: one(chores, {
+    fields: [choreAssignments.choreId],
+    references: [chores.id],
+  }),
+  assignee: one(users, {
+    fields: [choreAssignments.assignedTo],
+    references: [users.id],
+  }),
+  assigner: one(users, {
+    fields: [choreAssignments.assignedBy],
+    references: [users.id],
+  }),
+  verifier: one(users, {
+    fields: [choreAssignments.verifiedBy],
+    references: [users.id],
+  }),
+}));
+
+export const allowancePaymentsRelations = relations(allowancePayments, ({ one }) => ({
+  family: one(families, {
+    fields: [allowancePayments.familyId],
+    references: [families.id],
+  }),
+  user: one(users, {
+    fields: [allowancePayments.userId],
+    references: [users.id],
+  }),
+  choreAssignment: one(choreAssignments, {
+    fields: [allowancePayments.choreAssignmentId],
+    references: [choreAssignments.id],
+  }),
+  payer: one(users, {
+    fields: [allowancePayments.paidBy],
+    references: [users.id],
+  }),
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.id],
+  }),
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id],
+  }),
+}));
+
+export const rewardsRelations = relations(rewards, ({ one, many }) => ({
+  family: one(families, {
+    fields: [rewards.familyId],
+    references: [families.id],
+  }),
+  creator: one(users, {
+    fields: [rewards.createdBy],
+    references: [users.id],
+  }),
+  redemptions: many(rewardRedemptions),
+}));
+
+export const rewardRedemptionsRelations = relations(rewardRedemptions, ({ one }) => ({
+  reward: one(rewards, {
+    fields: [rewardRedemptions.rewardId],
+    references: [rewards.id],
+  }),
+  user: one(users, {
+    fields: [rewardRedemptions.userId],
+    references: [users.id],
+  }),
+  fulfiller: one(users, {
+    fields: [rewardRedemptions.fulfilledBy],
+    references: [users.id],
+  }),
+}));
+
+export const pointTransactionsRelations = relations(pointTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [pointTransactions.userId],
+    references: [users.id],
+  }),
+  choreAssignment: one(choreAssignments, {
+    fields: [pointTransactions.choreAssignmentId],
+    references: [choreAssignments.id],
+  }),
+  task: one(tasks, {
+    fields: [pointTransactions.taskId],
+    references: [tasks.id],
+  }),
+  rewardRedemption: one(rewardRedemptions, {
+    fields: [pointTransactions.rewardRedemptionId],
+    references: [rewardRedemptions.id],
+  }),
+  creator: one(users, {
+    fields: [pointTransactions.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const userStreaksRelations = relations(userStreaks, ({ one }) => ({
+  user: one(users, {
+    fields: [userStreaks.userId],
+    references: [users.id],
+  }),
+}));
+
 // Type exports for use in application
 export type Family = typeof families.$inferSelect;
 export type NewFamily = typeof families.$inferInsert;
@@ -863,3 +1114,21 @@ export type EncryptedMessage = typeof encryptedMessages.$inferSelect;
 export type NewEncryptedMessage = typeof encryptedMessages.$inferInsert;
 export type EncryptedNote = typeof encryptedNotes.$inferSelect;
 export type NewEncryptedNote = typeof encryptedNotes.$inferInsert;
+export type Chore = typeof chores.$inferSelect;
+export type NewChore = typeof chores.$inferInsert;
+export type ChoreAssignment = typeof choreAssignments.$inferSelect;
+export type NewChoreAssignment = typeof choreAssignments.$inferInsert;
+export type AllowancePayment = typeof allowancePayments.$inferSelect;
+export type NewAllowancePayment = typeof allowancePayments.$inferInsert;
+export type Achievement = typeof achievements.$inferSelect;
+export type NewAchievement = typeof achievements.$inferInsert;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type NewUserAchievement = typeof userAchievements.$inferInsert;
+export type Reward = typeof rewards.$inferSelect;
+export type NewReward = typeof rewards.$inferInsert;
+export type RewardRedemption = typeof rewardRedemptions.$inferSelect;
+export type NewRewardRedemption = typeof rewardRedemptions.$inferInsert;
+export type PointTransaction = typeof pointTransactions.$inferSelect;
+export type NewPointTransaction = typeof pointTransactions.$inferInsert;
+export type UserStreak = typeof userStreaks.$inferSelect;
+export type NewUserStreak = typeof userStreaks.$inferInsert;
