@@ -251,7 +251,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   });
 
   // Prepare realtime config
-  const realtimeConfig = user?.familyId && user?.id
+  // Note: Realtime features (Socket.IO) are disabled in production as Vercel doesn't support WebSockets
+  const isProduction = process.env.NODE_ENV === 'production';
+  const realtimeConfig = !isProduction && user?.familyId && user?.id
     ? {
         familyId: user.familyId,
         userId: user.id,
