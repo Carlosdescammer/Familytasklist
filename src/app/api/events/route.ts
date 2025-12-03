@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
         // Create notifications for all family members (handles email + push + database)
         const notificationsList = familyMembers.map((member) => ({
-          familyId: session.user.familyId,
+          familyId: session.user.familyId!,
           userId: member.id,
           type: 'event_created' as const,
           title: `New Event: ${event.title}`,

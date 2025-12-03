@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         const adderName = session.user.name || session.user.email || 'Someone';
 
         const notificationsList = familyMembers.map((member) => ({
-          familyId: session.user.familyId,
+          familyId: session.user.familyId!,
           userId: member.id,
           type: 'shopping_list_updated' as const,
           title: `Shopping List Updated`,

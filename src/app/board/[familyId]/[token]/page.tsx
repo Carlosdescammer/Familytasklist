@@ -554,10 +554,10 @@ export default function FamilyBoardPage() {
                   Family Photos
                 </Title>
                 <Badge color="pink" variant="light" size="sm">
-                  {boardData.photos.length}
+                  {boardData.photos!.length}
                 </Badge>
               </Group>
-              {boardData.photos.length === 0 ? (
+              {boardData.photos!.length === 0 ? (
                 <Text c="gray.3" ta="center" py="xl">
                   No photos yet
                 </Text>
@@ -572,8 +572,8 @@ export default function FamilyBoardPage() {
                     {(styles) => (
                       <div style={styles}>
                         <Image
-                          src={boardData.photos[currentPhotoIndex].url}
-                          alt={boardData.photos[currentPhotoIndex].caption || 'Family photo'}
+                          src={boardData.photos![currentPhotoIndex].url}
+                          alt={boardData.photos![currentPhotoIndex].caption || 'Family photo'}
                           radius="md"
                           h={300}
                           fit="cover"
@@ -591,17 +591,17 @@ export default function FamilyBoardPage() {
                             backdropFilter: 'blur(10px)',
                           }}
                         >
-                          {boardData.photos[currentPhotoIndex].caption && (
+                          {boardData.photos![currentPhotoIndex].caption && (
                             <Text c="white" size="sm" fw={500}>
-                              {boardData.photos[currentPhotoIndex].caption}
+                              {boardData.photos![currentPhotoIndex].caption}
                             </Text>
                           )}
                           <Group justify="space-between">
                             <Text c="gray.3" size="xs">
-                              By {boardData.photos[currentPhotoIndex].uploaderName}
+                              By {boardData.photos![currentPhotoIndex].uploaderName}
                             </Text>
                             <Text c="gray.3" size="xs">
-                              {currentPhotoIndex + 1} / {boardData.photos.length}
+                              {currentPhotoIndex + 1} / {boardData.photos!.length}
                             </Text>
                           </Group>
                         </Stack>

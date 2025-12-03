@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
         const recipeType = data.source === 'ai' ? ' (AI-generated)' : '';
 
         const notificationsList = familyMembers.map((member) => ({
-          familyId: session.user.familyId,
+          familyId: session.user.familyId!,
           userId: member.id,
           type: 'recipe_shared' as const,
           title: `New Recipe: ${data.title}`,
