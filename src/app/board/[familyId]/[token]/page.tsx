@@ -29,6 +29,10 @@ import {
   IconCheck,
   IconRefresh,
   IconPhoto,
+  IconCloudRain,
+  IconSun,
+  IconCake,
+  IconCalendar,
 } from '@tabler/icons-react';
 
 interface BoardData {
@@ -77,6 +81,44 @@ interface BoardData {
   }>;
   clock?: {
     enabled: boolean;
+  };
+  weather?: {
+    location: string;
+    current: {
+      temp: string;
+      feelsLike: string;
+      condition: string;
+      humidity: string;
+      windSpeed: string;
+      icon: string;
+    } | null;
+    forecast: Array<{
+      date: string;
+      maxTemp: string;
+      minTemp: string;
+      condition: string;
+      icon: string;
+    }>;
+    error?: string;
+  };
+  birthdays?: Array<{
+    id: string;
+    name: string;
+    birthday: string;
+    daysUntil: number;
+    age: number;
+    avatarUrl?: string;
+  }>;
+  calendar?: {
+    month: number;
+    year: number;
+    events: Array<{
+      id: string;
+      title: string;
+      startTime: string;
+      endTime?: string;
+      color?: string;
+    }>;
   };
 }
 
@@ -610,6 +652,298 @@ export default function FamilyBoardPage() {
                   </Transition>
                 </div>
               )}
+            </Card>
+          )}
+
+          {/* Weather Widget */}
+          {boardData.widgets.includes('weather') && boardData.weather && (
+            <Card
+              padding="lg"
+              radius="md"
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                height: 'fit-content',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
+            >
+              <Group gap="xs" mb="md">
+                <ThemeIcon size="lg" color="cyan" variant="light" radius="md">
+                  {boardData.weather.current ? <IconSun size={20} /> : <IconCloudRain size={20} />}
+                </ThemeIcon>
+                <Title order={3} c="white">
+                  Weather
+                </Title>
+              </Group>
+
+              {boardData.weather.error ? (
+                <Text c="gray.3" ta="center" py="md">
+                  {boardData.weather.error}
+                </Text>
+              ) : boardData.weather.current ? (
+                <Stack gap="md">
+                  <div>
+                    <Text c="gray.4" size="sm" mb="xs">
+                      {boardData.weather.location}
+                    </Text>
+                    <Group gap="xl">
+                      <div>
+                        <Text c="white" size="3rem" fw={700} lh={1}>
+                          {boardData.weather.current.temp}°F
+                        </Text>
+                        <Text c="gray.3" size="sm">
+                          Feels like {boardData.weather.current.feelsLike}°F
+                        </Text>
+                      </div>
+                      <Stack gap={4}>
+                        <Text c="white" size="lg" fw={500}>
+                          {boardData.weather.current.condition}
+                        </Text>
+                        <Text c="gray.4" size="sm">
+                          Humidity: {boardData.weather.current.humidity}%
+                        </Text>
+                        <Text c="gray.4" size="sm">
+                          Wind: {boardData.weather.current.windSpeed} mph
+                        </Text>
+                      </Stack>
+                    </Group>
+                  </div>
+
+                  {boardData.weather.forecast.length > 0 && (
+                    <div>
+                      <Text c="gray.4" size="sm" mb="xs" fw={500}>
+                        3-Day Forecast
+                      </Text>
+                      <SimpleGrid cols={3}>
+                        {boardData.weather.forecast.map((day, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              background: 'rgba(0,0,0,0.2)',
+                              padding: '8px',
+                              borderRadius: '8px',
+                              textAlign: 'center',
+                            }}
+                          >
+                            <Text c="gray.3" size="xs" mb={4}>
+                              {new Date(day.date).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                              })}
+                            </Text>
+                            <Text c="white" size="sm" fw={600}>
+                              {day.maxTemp}° / {day.minTemp}°
+                            </Text>
+                            <Text c="gray.4" size="xs" mt={4}>
+                              {day.condition}
+                            </Text>
+                          </div>
+                        ))}
+                      </SimpleGrid>
+                    </div>
+                  )}
+                </Stack>
+              ) : (
+                <Text c="gray.3" ta="center" py="md">
+                  Weather data unavailable
+                </Text>
+              )}
+            </Card>
+          )}
+
+          {/* Birthdays Widget */}
+          {boardData.widgets.includes('birthdays') && boardData.birthdays && (
+            <Card
+              padding="lg"
+              radius="md"
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                height: 'fit-content',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
+            >
+              <Group gap="xs" mb="md">
+                <ThemeIcon size="lg" color="grape" variant="light" radius="md">
+                  <IconCake size={20} />
+                </ThemeIcon>
+                <Title order={3} c="white">
+                  Upcoming Birthdays
+                </Title>
+                <Badge color="grape" variant="light" size="sm">
+                  {boardData.birthdays.length}
+                </Badge>
+              </Group>
+
+              {boardData.birthdays.length === 0 ? (
+                <Text c="gray.3" ta="center" py="xl">
+                  No birthdays in the next 60 days
+                </Text>
+              ) : (
+                <Stack gap="sm">
+                  {boardData.birthdays.slice(0, 5).map((birthday) => (
+                    <div
+                      key={birthday.id}
+                      style={{
+                        background: 'rgba(0,0,0,0.2)',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        transition: 'transform 0.2s',
+                      }}
+                    >
+                      <Group justify="space-between">
+                        <Group gap="sm">
+                          <ThemeIcon size="md" color="grape" variant="light" radius="xl">
+                            <IconCake size={16} />
+                          </ThemeIcon>
+                          <div>
+                            <Text c="white" size="sm" fw={500}>
+                              {birthday.name}
+                            </Text>
+                            <Text c="gray.4" size="xs">
+                              {new Date(birthday.birthday).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}{' '}
+                              • Turning {birthday.age}
+                            </Text>
+                          </div>
+                        </Group>
+                        <Badge
+                          color={birthday.daysUntil === 0 ? 'grape' : 'gray'}
+                          variant={birthday.daysUntil === 0 ? 'filled' : 'light'}
+                          size="sm"
+                        >
+                          {birthday.daysUntil === 0
+                            ? 'Today!'
+                            : `${birthday.daysUntil} day${birthday.daysUntil === 1 ? '' : 's'}`}
+                        </Badge>
+                      </Group>
+                    </div>
+                  ))}
+                </Stack>
+              )}
+            </Card>
+          )}
+
+          {/* Calendar Widget */}
+          {boardData.widgets.includes('calendar') && boardData.calendar && (
+            <Card
+              padding="lg"
+              radius="md"
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                gridColumn: 'span 2',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
+            >
+              <Group gap="xs" mb="md">
+                <ThemeIcon size="lg" color="blue" variant="light" radius="md">
+                  <IconCalendar size={20} />
+                </ThemeIcon>
+                <Title order={3} c="white">
+                  {new Date(boardData.calendar.year, boardData.calendar.month).toLocaleDateString(
+                    'en-US',
+                    {
+                      month: 'long',
+                      year: 'numeric',
+                    }
+                  )}
+                </Title>
+                <Badge color="blue" variant="light" size="sm">
+                  {boardData.calendar.events.length} event
+                  {boardData.calendar.events.length !== 1 ? 's' : ''}
+                </Badge>
+              </Group>
+
+              {(() => {
+                const year = boardData.calendar!.year;
+                const month = boardData.calendar!.month;
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const days = [];
+
+                // Add empty cells for days before the 1st
+                for (let i = 0; i < firstDay; i++) {
+                  days.push(<div key={`empty-${i}`} />);
+                }
+
+                // Add calendar days
+                for (let day = 1; day <= daysInMonth; day++) {
+                  const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+                  const dayEvents = boardData.calendar!.events.filter((e) =>
+                    e.startTime.startsWith(dateStr)
+                  );
+                  const isToday =
+                    new Date().toDateString() === new Date(year, month, day).toDateString();
+
+                  days.push(
+                    <div
+                      key={day}
+                      style={{
+                        background: isToday
+                          ? 'rgba(34, 139, 230, 0.2)'
+                          : 'rgba(0,0,0,0.2)',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        border: isToday ? '2px solid rgba(34, 139, 230, 0.5)' : 'none',
+                        minHeight: '80px',
+                      }}
+                    >
+                      <Text
+                        c={isToday ? 'blue.4' : 'white'}
+                        size="sm"
+                        fw={isToday ? 700 : 500}
+                        mb={4}
+                      >
+                        {day}
+                      </Text>
+                      <Stack gap={2}>
+                        {dayEvents.slice(0, 2).map((event) => (
+                          <div
+                            key={event.id}
+                            style={{
+                              background: event.color || '#228be6',
+                              padding: '2px 4px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              color: 'white',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                        {dayEvents.length > 2 && (
+                          <Text c="gray.4" size="9px">
+                            +{dayEvents.length - 2} more
+                          </Text>
+                        )}
+                      </Stack>
+                    </div>
+                  );
+                }
+
+                return (
+                  <SimpleGrid cols={7} spacing="xs">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <Text
+                        key={day}
+                        c="gray.4"
+                        size="xs"
+                        fw={600}
+                        ta="center"
+                        mb="xs"
+                      >
+                        {day}
+                      </Text>
+                    ))}
+                    {days}
+                  </SimpleGrid>
+                );
+              })()}
             </Card>
           )}
         </SimpleGrid>

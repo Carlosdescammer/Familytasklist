@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { families, tasks, events, shoppingLists, shoppingItems, budgets, expenses, photos } from '@/db/schema';
-import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
+import { families, tasks, events, shoppingLists, shoppingItems, budgets, expenses, photos, users } from '@/db/schema';
+import { eq, and, gte, lte, desc, sql, isNotNull } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -194,6 +194,133 @@ export async function GET(
         uploaderName: photo.uploader?.name || 'Unknown',
         createdAt: photo.createdAt,
       }));
+    }
+
+    if (widgets.includes('weather')) {
+      // Get weather data using family location
+      if (family.location) {
+        try {
+          // Using wttr.in as a free weather API (no key required)
+          const weatherResponse = await fetch(
+            `https://wttr.in/${encodeURIComponent(family.location)}?format=j1`,
+            { next: { revalidate: 1800 } } // Cache for 30 minutes
+          );
+
+          if (weatherResponse.ok) {
+            const weatherData = await weatherResponse.json();
+            const current = weatherData.current_condition?.[0];
+            const forecast = weatherData.weather?.slice(0, 3); // Next 3 days
+
+            boardData.weather = {
+              location: family.location,
+              current: current ? {
+                temp: current.temp_F,
+                feelsLike: current.FeelsLikeF,
+                condition: current.weatherDesc?.[0]?.value || 'Unknown',
+                humidity: current.humidity,
+                windSpeed: current.windspeedMiles,
+                icon: current.weatherCode,
+              } : null,
+              forecast: forecast?.map((day: any) => ({
+                date: day.date,
+                maxTemp: day.maxtempF,
+                minTemp: day.mintempF,
+                condition: day.hourly?.[4]?.weatherDesc?.[0]?.value || 'Unknown',
+                icon: day.hourly?.[4]?.weatherCode,
+              })) || [],
+            };
+          }
+        } catch (error) {
+          console.error('Error fetching weather:', error);
+          boardData.weather = { error: 'Unable to fetch weather' };
+        }
+      } else {
+        boardData.weather = { error: 'Location not set' };
+      }
+    }
+
+    if (widgets.includes('birthdays')) {
+      // Get upcoming birthdays (next 60 days)
+      const familyUsers = await db.query.users.findMany({
+        where: and(
+          eq(users.familyId, familyId),
+          isNotNull(users.birthday)
+        ),
+        columns: {
+          id: true,
+          name: true,
+          birthday: true,
+          avatarUrl: true,
+        },
+      });
+
+      // Calculate upcoming birthdays
+      const today = new Date();
+      const upcomingBirthdays = familyUsers
+        .map((user) => {
+          if (!user.birthday) return null;
+
+          const birthday = new Date(user.birthday);
+          const thisYearBirthday = new Date(
+            today.getFullYear(),
+            birthday.getMonth(),
+            birthday.getDate()
+          );
+
+          // If birthday has passed this year, use next year
+          if (thisYearBirthday < today) {
+            thisYearBirthday.setFullYear(today.getFullYear() + 1);
+          }
+
+          const daysUntil = Math.ceil(
+            (thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          // Only include birthdays in the next 60 days
+          if (daysUntil <= 60) {
+            const age = today.getFullYear() - birthday.getFullYear();
+            return {
+              id: user.id,
+              name: user.name || 'Unknown',
+              birthday: thisYearBirthday.toISOString(),
+              daysUntil,
+              age: age + (thisYearBirthday.getFullYear() > today.getFullYear() ? 1 : 0),
+              avatarUrl: user.avatarUrl,
+            };
+          }
+          return null;
+        })
+        .filter((b) => b !== null)
+        .sort((a, b) => a!.daysUntil - b!.daysUntil);
+
+      boardData.birthdays = upcomingBirthdays;
+    }
+
+    if (widgets.includes('calendar')) {
+      // Get all events for current month (for calendar view)
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      const monthEvents = await db.query.events.findMany({
+        where: and(
+          eq(events.familyId, familyId),
+          gte(events.startTime, monthStart),
+          lte(events.startTime, monthEnd)
+        ),
+        orderBy: [events.startTime],
+      });
+
+      boardData.calendar = {
+        month: now.getMonth(),
+        year: now.getFullYear(),
+        events: monthEvents.map((event) => ({
+          id: event.id,
+          title: event.title,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          color: event.color,
+        })),
+      };
     }
 
     return NextResponse.json(boardData);

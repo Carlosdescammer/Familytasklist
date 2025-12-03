@@ -313,11 +313,14 @@ export default function SettingsPage() {
 
   // Board widget options
   const BOARD_WIDGETS = [
-    { value: 'events', label: 'Upcoming Events', description: 'Show calendar events' },
+    { value: 'calendar', label: 'Calendar View', description: 'Show monthly calendar with events' },
+    { value: 'events', label: 'Upcoming Events', description: 'Show calendar events list' },
     { value: 'tasks', label: 'Active Tasks', description: 'Show pending tasks' },
     { value: 'shopping', label: 'Shopping List', description: 'Show items to buy' },
     { value: 'budget', label: 'Budget Overview', description: 'Show monthly budget' },
     { value: 'photos', label: 'Family Photos', description: 'Show recent photos' },
+    { value: 'weather', label: 'Weather', description: 'Show current weather and forecast' },
+    { value: 'birthdays', label: 'Upcoming Birthdays', description: 'Show family member birthdays' },
     { value: 'clock', label: 'Clock & Date', description: 'Show current time' },
   ];
 
