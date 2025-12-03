@@ -6,6 +6,7 @@ import { eq, and, desc, ne } from 'drizzle-orm';
 import { z } from 'zod';
 import { syncEventToGoogleCalendar } from '@/lib/google-calendar';
 import { createCalendarNotificationPayload, sendPushNotificationToMultiple } from '@/lib/web-push-server';
+import { createNotifications } from '@/lib/notifications';
 
 const createEventSchema = z.object({
   title: z.string().min(1).max(200),
@@ -70,44 +71,41 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // Send push notification to other family members
+    // Send notifications to other family members
     try {
-      // Get push tokens for other family members (not the creator)
-      const familyTokens = await db.query.pushTokens.findMany({
+      // Get other family members (not the creator)
+      const familyMembers = await db.query.users.findMany({
         where: and(
-          eq(pushTokens.isActive, true),
-          ne(pushTokens.userId, session.user.id)
+          eq(users.familyId, session.user.familyId),
+          ne(users.id, session.user.id)
         ),
-        with: {
-          user: {
-            columns: {
-              familyId: true,
-            },
-          },
-        },
       });
 
-      // Filter to only tokens belonging to users in the same family
-      const relevantTokens = familyTokens.filter(
-        (token: any) => token.user?.familyId === session.user.familyId
-      );
-
-      if (relevantTokens.length > 0) {
-        const subscriptions = relevantTokens.map((token) => JSON.parse(token.token));
-
-        const payload = createCalendarNotificationPayload(
-          event.title,
-          event.id,
-          new Date(event.startTime)
-        );
-
-        // Send notification asynchronously (don't wait for it)
-        sendPushNotificationToMultiple(subscriptions, payload).catch((error) => {
-          console.error('Error sending event notification:', error);
+      if (familyMembers.length > 0) {
+        const creatorName = session.user.name || session.user.email || 'Someone';
+        const eventDate = new Date(event.startTime).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
         });
+
+        // Create notifications for all family members (handles email + push + database)
+        const notificationsList = familyMembers.map((member) => ({
+          familyId: session.user.familyId,
+          userId: member.id,
+          type: 'event_created' as const,
+          title: `New Event: ${event.title}`,
+          message: `${creatorName} created a new event "${event.title}" on ${eventDate}`,
+        }));
+
+        await createNotifications(notificationsList);
+
+        console.log(`Sent event creation notifications to ${familyMembers.length} family member(s) for event: ${event.title}`);
       }
     } catch (error) {
-      console.error('Error processing push notification for event:', error);
+      console.error('Error processing notifications for event:', error);
       // Don't fail the request if notification fails
     }
 

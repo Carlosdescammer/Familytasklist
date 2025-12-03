@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { recipes, recipeRatings, recipeComments } from '@/db/schema';
+import { recipes, recipeRatings, recipeComments, users } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
-import { eq, and, or, sql } from 'drizzle-orm';
+import { eq, and, or, sql, ne } from 'drizzle-orm';
 import { z } from 'zod';
+import { createNotifications } from '@/lib/notifications';
 
 const createRecipeSchema = z.object({
   title: z.string().min(1).max(200),
@@ -147,6 +148,37 @@ export async function POST(req: NextRequest) {
         notes: data.notes,
       })
       .returning();
+
+    // Send notifications to family members if recipe is shared (public or has source)
+    try {
+      // Notify family members about new recipe
+      const familyMembers = await db.query.users.findMany({
+        where: and(
+          eq(users.familyId, session.user.familyId),
+          ne(users.id, session.user.id)
+        ),
+      });
+
+      if (familyMembers.length > 0) {
+        const creatorName = session.user.name || session.user.email || 'Someone';
+        const recipeType = data.source === 'ai' ? ' (AI-generated)' : '';
+
+        const notificationsList = familyMembers.map((member) => ({
+          familyId: session.user.familyId,
+          userId: member.id,
+          type: 'recipe_shared' as const,
+          title: `New Recipe: ${data.title}`,
+          message: `${creatorName} shared a new recipe "${data.title}"${recipeType} with the family`,
+        }));
+
+        await createNotifications(notificationsList);
+
+        console.log(`Sent recipe shared notifications to ${familyMembers.length} family member(s) for recipe: ${data.title}`);
+      }
+    } catch (error) {
+      console.error('Error sending recipe shared notifications:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json(recipe, { status: 201 });
   } catch (error) {

@@ -16,6 +16,8 @@ import {
   Loader,
   Alert,
   ThemeIcon,
+  Image,
+  Transition,
 } from '@mantine/core';
 import {
   IconCalendarEvent,
@@ -26,6 +28,7 @@ import {
   IconAlertCircle,
   IconCheck,
   IconRefresh,
+  IconPhoto,
 } from '@tabler/icons-react';
 
 interface BoardData {
@@ -65,6 +68,13 @@ interface BoardData {
     totalSpent: number;
     percentUsed: number;
   };
+  photos?: Array<{
+    id: string;
+    url: string;
+    caption?: string;
+    uploaderName: string;
+    createdAt: string;
+  }>;
   clock?: {
     enabled: boolean;
   };
@@ -79,6 +89,8 @@ export default function FamilyBoardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   const fetchBoardData = useCallback(async () => {
     try {
@@ -101,6 +113,7 @@ export default function FamilyBoardPage() {
 
   // Initial fetch and auto-refresh every 30 seconds
   useEffect(() => {
+    setMounted(true);
     fetchBoardData();
     const interval = setInterval(fetchBoardData, 30000);
     return () => clearInterval(interval);
@@ -113,6 +126,16 @@ export default function FamilyBoardPage() {
     }, 1000);
     return () => clearInterval(clockInterval);
   }, []);
+
+  // Photo carousel auto-advance every 5 seconds
+  useEffect(() => {
+    if (boardData?.photos && boardData.photos.length > 1) {
+      const photoInterval = setInterval(() => {
+        setCurrentPhotoIndex((prev) => (prev + 1) % boardData.photos!.length);
+      }, 5000);
+      return () => clearInterval(photoInterval);
+    }
+  }, [boardData?.photos]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -174,10 +197,50 @@ export default function FamilyBoardPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #1a1b1e 0%, #25262b 100%)',
+        background: 'linear-gradient(135deg, #0f0f23 0%, #1a1b1e 50%, #25262b 100%)',
         padding: '20px',
+        animation: 'fadeIn 0.5s ease-in',
       }}
     >
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+        .widget-card {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: slideUp 0.6s ease-out;
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .widget-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+        .photo-carousel {
+          position: relative;
+          overflow: hidden;
+          border-radius: 12px;
+        }
+        .photo-carousel img {
+          transition: opacity 0.5s ease-in-out;
+        }
+      `}</style>
       <Container size="xl">
         {/* Header */}
         <Group justify="space-between" mb="xl">
@@ -185,7 +248,7 @@ export default function FamilyBoardPage() {
             <Title order={1} c="white" style={{ fontSize: '2.5rem' }}>
               {boardData.familyName}
             </Title>
-            <Text c="dimmed" size="sm">
+            <Text c="gray.4" size="sm">
               Family Board
             </Text>
           </div>
@@ -193,11 +256,20 @@ export default function FamilyBoardPage() {
             <Card
               padding="md"
               radius="md"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
             >
               <Stack gap={0} align="center">
                 <Text
-                  style={{ fontSize: '3rem', fontWeight: 700, lineHeight: 1 }}
+                  style={{
+                    fontSize: '3rem',
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+                  }}
                   c="white"
                 >
                   {currentTime.toLocaleTimeString('en-US', {
@@ -205,7 +277,7 @@ export default function FamilyBoardPage() {
                     minute: '2-digit',
                   })}
                 </Text>
-                <Text c="dimmed" size="lg">
+                <Text c="gray.3" size="lg" style={{ fontWeight: 500 }}>
                   {currentTime.toLocaleDateString('en-US', {
                     weekday: 'long',
                     month: 'long',
@@ -224,7 +296,12 @@ export default function FamilyBoardPage() {
             <Card
               padding="lg"
               radius="md"
-              style={{ background: 'rgba(255,255,255,0.05)', height: 'fit-content' }}
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                height: 'fit-content',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
             >
               <Group gap="xs" mb="md">
                 <ThemeIcon size="lg" color="blue" variant="light" radius="md">
@@ -236,7 +313,7 @@ export default function FamilyBoardPage() {
               </Group>
               <Stack gap="sm">
                 {boardData.events.length === 0 ? (
-                  <Text c="dimmed" ta="center" py="md">
+                  <Text c="gray.3" ta="center" py="md">
                     No upcoming events
                   </Text>
                 ) : (
@@ -254,7 +331,7 @@ export default function FamilyBoardPage() {
                         {event.title}
                       </Text>
                       <Group gap="xs">
-                        <Text c="dimmed" size="sm">
+                        <Text c="gray.3" size="sm">
                           {formatDate(event.startTime)} at {formatTime(event.startTime)}
                         </Text>
                         {event.location && (
@@ -275,7 +352,12 @@ export default function FamilyBoardPage() {
             <Card
               padding="lg"
               radius="md"
-              style={{ background: 'rgba(255,255,255,0.05)', height: 'fit-content' }}
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                height: 'fit-content',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
             >
               <Group gap="xs" mb="md">
                 <ThemeIcon size="lg" color="green" variant="light" radius="md">
@@ -295,7 +377,7 @@ export default function FamilyBoardPage() {
                       <ThemeIcon size="xl" color="green" variant="light" radius="xl">
                         <IconCheck size={24} />
                       </ThemeIcon>
-                      <Text c="dimmed">All tasks complete!</Text>
+                      <Text c="gray.3">All tasks complete!</Text>
                     </Stack>
                   </Center>
                 ) : (
@@ -313,7 +395,7 @@ export default function FamilyBoardPage() {
                         <Text c="white" size="sm" fw={500}>
                           {task.title}
                         </Text>
-                        <Text c="dimmed" size="xs">
+                        <Text c="gray.3" size="xs">
                           {task.assigneeName}
                           {task.dueDate && ` - Due ${formatDate(task.dueDate)}`}
                         </Text>
@@ -333,7 +415,12 @@ export default function FamilyBoardPage() {
             <Card
               padding="lg"
               radius="md"
-              style={{ background: 'rgba(255,255,255,0.05)', height: 'fit-content' }}
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                height: 'fit-content',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
             >
               <Group gap="xs" mb="md">
                 <ThemeIcon size="lg" color="orange" variant="light" radius="md">
@@ -345,7 +432,7 @@ export default function FamilyBoardPage() {
               </Group>
               <Stack gap="md">
                 {boardData.shopping.length === 0 ? (
-                  <Text c="dimmed" ta="center" py="md">
+                  <Text c="gray.3" ta="center" py="md">
                     No active shopping lists
                   </Text>
                 ) : (
@@ -362,14 +449,14 @@ export default function FamilyBoardPage() {
                       <Stack gap={4}>
                         {list.items.slice(0, 5).map((item) => (
                           <Group key={item.id} gap="xs">
-                            <Text c="dimmed" size="sm">
+                            <Text c="gray.3" size="sm">
                               {item.quantity && `${item.quantity}x `}
                               {item.name}
                             </Text>
                           </Group>
                         ))}
                         {list.items.length > 5 && (
-                          <Text c="dimmed" size="xs">
+                          <Text c="gray.3" size="xs">
                             +{list.items.length - 5} more items
                           </Text>
                         )}
@@ -386,7 +473,12 @@ export default function FamilyBoardPage() {
             <Card
               padding="lg"
               radius="md"
-              style={{ background: 'rgba(255,255,255,0.05)', height: 'fit-content' }}
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                height: 'fit-content',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
             >
               <Group gap="xs" mb="md">
                 <ThemeIcon size="lg" color="teal" variant="light" radius="md">
@@ -422,7 +514,7 @@ export default function FamilyBoardPage() {
                 />
                 <Stack gap="xs">
                   <div>
-                    <Text c="dimmed" size="sm">
+                    <Text c="gray.4" size="sm">
                       Spent
                     </Text>
                     <Text c="white" size="xl" fw={700}>
@@ -430,7 +522,7 @@ export default function FamilyBoardPage() {
                     </Text>
                   </div>
                   <div>
-                    <Text c="dimmed" size="sm">
+                    <Text c="gray.4" size="sm">
                       Budget
                     </Text>
                     <Text c="white" size="lg">
@@ -441,12 +533,91 @@ export default function FamilyBoardPage() {
               </Group>
             </Card>
           )}
+
+          {/* Photos Widget */}
+          {boardData.widgets.includes('photos') && boardData.photos && (
+            <Card
+              padding="lg"
+              radius="md"
+              className="widget-card"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                height: 'fit-content',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              }}
+            >
+              <Group gap="xs" mb="md">
+                <ThemeIcon size="lg" color="pink" variant="light" radius="md">
+                  <IconPhoto size={20} />
+                </ThemeIcon>
+                <Title order={3} c="white">
+                  Family Photos
+                </Title>
+                <Badge color="pink" variant="light" size="sm">
+                  {boardData.photos.length}
+                </Badge>
+              </Group>
+              {boardData.photos.length === 0 ? (
+                <Text c="gray.3" ta="center" py="xl">
+                  No photos yet
+                </Text>
+              ) : (
+                <div className="photo-carousel">
+                  <Transition
+                    mounted={mounted}
+                    transition="fade"
+                    duration={500}
+                    timingFunction="ease"
+                  >
+                    {(styles) => (
+                      <div style={styles}>
+                        <Image
+                          src={boardData.photos[currentPhotoIndex].url}
+                          alt={boardData.photos[currentPhotoIndex].caption || 'Family photo'}
+                          radius="md"
+                          h={300}
+                          fit="cover"
+                          style={{
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                          }}
+                        />
+                        <Stack
+                          gap="xs"
+                          mt="md"
+                          style={{
+                            background: 'rgba(0,0,0,0.3)',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            backdropFilter: 'blur(10px)',
+                          }}
+                        >
+                          {boardData.photos[currentPhotoIndex].caption && (
+                            <Text c="white" size="sm" fw={500}>
+                              {boardData.photos[currentPhotoIndex].caption}
+                            </Text>
+                          )}
+                          <Group justify="space-between">
+                            <Text c="gray.3" size="xs">
+                              By {boardData.photos[currentPhotoIndex].uploaderName}
+                            </Text>
+                            <Text c="gray.3" size="xs">
+                              {currentPhotoIndex + 1} / {boardData.photos.length}
+                            </Text>
+                          </Group>
+                        </Stack>
+                      </div>
+                    )}
+                  </Transition>
+                </div>
+              )}
+            </Card>
+          )}
         </SimpleGrid>
 
         {/* Footer */}
         <Group justify="center" mt="xl" gap="xs">
           <IconRefresh size={14} color="gray" />
-          <Text c="dimmed" size="xs">
+          <Text c="gray.5" size="xs">
             Auto-refreshes every 30 seconds - Last updated:{' '}
             {new Date(boardData.lastUpdated).toLocaleTimeString()}
           </Text>

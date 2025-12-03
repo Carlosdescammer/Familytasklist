@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { shoppingLists } from '@/db/schema';
+import { shoppingLists, users } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, ne } from 'drizzle-orm';
 import { z } from 'zod';
+import { createNotifications } from '@/lib/notifications';
 
 const createShoppingListSchema = z.object({
   name: z.string().min(1).max(200),
@@ -70,6 +71,35 @@ export async function POST(req: NextRequest) {
         createdBy: session.user.id,
       })
       .returning();
+
+    // Send notifications to other family members
+    try {
+      const familyMembers = await db.query.users.findMany({
+        where: and(
+          eq(users.familyId, session.user.familyId),
+          ne(users.id, session.user.id)
+        ),
+      });
+
+      if (familyMembers.length > 0) {
+        const creatorName = session.user.name || session.user.email || 'Someone';
+
+        const notificationsList = familyMembers.map((member) => ({
+          familyId: session.user.familyId,
+          userId: member.id,
+          type: 'shopping_list_created' as const,
+          title: `New Shopping List: ${data.name}`,
+          message: `${creatorName} created a new shopping list "${data.name}"`,
+        }));
+
+        await createNotifications(notificationsList);
+
+        console.log(`Sent shopping list creation notifications to ${familyMembers.length} family member(s) for list: ${data.name}`);
+      }
+    } catch (error) {
+      console.error('Error processing notifications for shopping list:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json(list, { status: 201 });
   } catch (error) {

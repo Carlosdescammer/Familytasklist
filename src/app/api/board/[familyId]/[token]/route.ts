@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { families, tasks, events, shoppingLists, shoppingItems, budgets, expenses } from '@/db/schema';
+import { families, tasks, events, shoppingLists, shoppingItems, budgets, expenses, photos } from '@/db/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -169,6 +169,31 @@ export async function GET(
       boardData.clock = {
         enabled: true,
       };
+    }
+
+    if (widgets.includes('photos')) {
+      // Get recent photos (last 12 photos)
+      const recentPhotos = await db.query.photos.findMany({
+        where: eq(photos.familyId, familyId),
+        orderBy: [desc(photos.createdAt)],
+        limit: 12,
+        with: {
+          uploader: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      boardData.photos = recentPhotos.map((photo) => ({
+        id: photo.id,
+        url: photo.url,
+        caption: photo.caption,
+        uploaderName: photo.uploader?.name || 'Unknown',
+        createdAt: photo.createdAt,
+      }));
     }
 
     return NextResponse.json(boardData);

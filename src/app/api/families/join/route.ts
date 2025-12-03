@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { families, users, familyMembers } from '@/db/schema';
 import { auth } from '@/lib/auth-helpers';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, ne } from 'drizzle-orm';
 import { z } from 'zod';
+import { createNotifications } from '@/lib/notifications';
 
 const joinFamilySchema = z.object({
   inviteCode: z.string().uuid(),
@@ -60,6 +61,36 @@ export async function POST(req: NextRequest) {
         .update(users)
         .set({ familyId: family.id, activeFamilyId: family.id })
         .where(eq(users.id, session.user.id));
+    }
+
+    // Notify all existing family members that someone joined
+    try {
+      const existingMembers = await db.query.users.findMany({
+        where: and(
+          eq(users.familyId, family.id),
+          ne(users.id, session.user.id)
+        ),
+      });
+
+      if (existingMembers.length > 0) {
+        const newMemberName = currentUser?.name || session.user.email || 'A new member';
+
+        const notificationsList = existingMembers.map((member) => ({
+          familyId: family.id,
+          userId: member.id,
+          type: 'family_member_joined' as const,
+          title: `${newMemberName} Joined Your Family!`,
+          message: `${newMemberName} has joined ${family.name}. Welcome them to the family!`,
+          relatedUserId: session.user.id,
+        }));
+
+        await createNotifications(notificationsList);
+
+        console.log(`Sent family member joined notifications to ${existingMembers.length} member(s) for: ${newMemberName}`);
+      }
+    } catch (error) {
+      console.error('Error sending family member joined notifications:', error);
+      // Don't fail the join if notifications fail
     }
 
     return NextResponse.json({ message: 'Successfully joined family', family });

@@ -317,6 +317,7 @@ export default function SettingsPage() {
     { value: 'tasks', label: 'Active Tasks', description: 'Show pending tasks' },
     { value: 'shopping', label: 'Shopping List', description: 'Show items to buy' },
     { value: 'budget', label: 'Budget Overview', description: 'Show monthly budget' },
+    { value: 'photos', label: 'Family Photos', description: 'Show recent photos' },
     { value: 'clock', label: 'Clock & Date', description: 'Show current time' },
   ];
 
